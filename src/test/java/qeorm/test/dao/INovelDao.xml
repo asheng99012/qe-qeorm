@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+根节点必须是sqlConfigs
+nameSpace：必须，为某个dao的 fullName
+dbName：数据库组名称，默认为 nameSpace的第三部分，此例中默认为：core
+-->
+<sqlConfigs dbName="default" nameSpace="qeorm.test.dao.INovelDao">
+
+    <!--
+    id：必须，对应nameSpace对应的dao的方法名
+    dbName：可选，如果此sql为读操作，则默认为父dbName+Master，如果是写操作，默认为父dbName+Slave本例中为：defaultSlave
+
+    小贴士：qeorm会自动分析sql语句，判断是读操作还是写操作，然后在相应的 master或slave库上执行
+    -->
+    <sqlConfig id="getNovelList" >
+        <!--
+        qeorm会自行分析{xxx}，当参数中有此参数时，此条件生效，否则会无视此条件
+        -->
+        <sql>
+            <![CDATA[ select * from `novel` where name like '%{name}%' and id in ({ids}) order by {oo} limit 10 ]]>
+        </sql>
+        <!--当需要返回嵌套对象时，需要sqlIntercepts配置-->
+        <sqlIntercepts>
+            <!--
+            一个 sqlIntercepts 下可以有多个 sqlConfig
+            extend:当是select语句时，必须项，有三个可选值，分别为：extend one2One one2Many
+            relationKey：必须项，标识对应关系，以本例为例，意思是 父sql的tag_id 和 子sql的id是对应关系
+            fillKey：表示本sql返回的数据要填充到父类的哪个字段上，当extend为extend时，此项为空
+            -->
+            <sqlConfig extend="one2One" relationKey="tag_id|id" fillKey="tagInfo">
+                <sql> select * from `tag` where id in ({tag_id}) </sql>
+            </sqlConfig>
+        </sqlIntercepts>
+    </sqlConfig>
+</sqlConfigs>
+

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqlConfigs  nameSpace="qeorm.test.dao.ITagDao" dbName="zjstest">
+    <sqlConfig id="getTagList" >
+        <sql>
+            <![CDATA[ select * from `tag` where id={id} and name like '%{name}%' ]]>
+        </sql>
+    </sqlConfig>
+    <sqlConfig id="findTagById"  >
+        <sql>
+            <![CDATA[ select * from `tag` where id={id} ]]>
+        </sql>
+    </sqlConfig>
+    <sqlConfig id="count" >
+        <sql>
+            <![CDATA[ select count(*) from `tag` where id={id} and name like '%{name}%' ]]>
+        </sql>
+
+    </sqlConfig>
+    <sqlConfig id="deleteById" >
+        <sql>
+            <![CDATA[ delete from `tag` where id={id} and name like '%{name}%' ]]>
+        </sql>
+    </sqlConfig>
+</sqlConfigs>
