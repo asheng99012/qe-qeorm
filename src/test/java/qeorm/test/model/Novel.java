@@ -35,7 +35,7 @@ import qeorm.annotation.Table;
  * insert
  * update 注意，当update时，where条件为  id={id}
  */
-@Table(where = " id={id} and name like '%{name}%'")
+@Table(where = " id={id} and name like '%{name}%'",masterDbName = "defaultMaster" ,slaveDbName = "userSlave")
 public class Novel extends ModelBase {
     private Integer id;
     private String name;
