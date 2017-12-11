@@ -1,5 +1,6 @@
 package qeorm;
 
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,7 +22,9 @@ import qeorm.intercept.IFunIntercept;
 /**
  * Created by asheng on 2015/7/20 0020.
  */
-public class ModelBase implements IFunIntercept {
+public class ModelBase implements IFunIntercept, Serializable, Cloneable {
+    @Transient
+    private static final long serialVersionUID = 1L;
     @Transient
     private Logger logger = LoggerFactory.getLogger(getClass());
     @Transient
@@ -37,7 +40,8 @@ public class ModelBase implements IFunIntercept {
 
 
     @Transient
-    private Boolean withRelation ;
+    private Boolean withRelation;
+
     public Boolean isWithRelation() {
         return withRelation;
     }
@@ -54,7 +58,7 @@ public class ModelBase implements IFunIntercept {
     }
 
     public Integer getPs() {
-        if (ps == null ) return 50;
+        if (ps == null) return 50;
         return ps;
     }
 
@@ -79,7 +83,7 @@ public class ModelBase implements IFunIntercept {
     public <T> List<T> selectWithrelation() {
         this.withRelation = true;
         Object o = exec(SqlConfig.SELECT);
-        this.withRelation=null;
+        this.withRelation = null;
         if (o == null) return new ArrayList<T>();
         return (List<T>) o;
     }
@@ -89,7 +93,7 @@ public class ModelBase implements IFunIntercept {
         if (null == list || list.size() == 0) return null;
         return list.get(0);
     }
-    
+
     public <T> T selectOneNotWithrelation() {
         List<T> list = select();
         if (null == list || list.size() == 0) return null;
@@ -99,7 +103,7 @@ public class ModelBase implements IFunIntercept {
     public <T> List<T> select() {
         this.withRelation = false;
         Object o = exec(SqlConfig.SELECT);
-        this.withRelation=null;
+        this.withRelation = null;
         if (o == null) return new ArrayList<T>();
         return (List<T>) o;
     }
