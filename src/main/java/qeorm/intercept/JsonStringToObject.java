@@ -6,20 +6,20 @@ import qeorm.utils.JsonUtils;
 
 import java.util.Map;
 
-public class ObjectToJsonString implements IFunIntercept {
-    private static ObjectToJsonString instance;
+public class JsonStringToObject implements IFunIntercept {
+    private static JsonStringToObject instance;
 
     @Override
     public void intercept(String key, Map<String, Object> rowData, SqlResult sqlResult) {
         Object val = rowData.get(key);
-        if (val != null) {
-            rowData.put(key, JsonUtils.toJson(val));
+        if (val != null && !val.toString().equals("")) {
+            rowData.put(key, JsonUtils.convert(val, Map.class));
         }
     }
 
-    public static ObjectToJsonString getInstance() {
+    public static JsonStringToObject getInstance() {
         if (instance == null)
-            instance = new ObjectToJsonString();
+            instance = new JsonStringToObject();
         return instance;
     }
 }
