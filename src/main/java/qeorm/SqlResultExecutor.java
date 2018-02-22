@@ -14,6 +14,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import qeorm.intercept.IFunIntercept;
+import qeorm.intercept.ObjectToJsonString;
 import qeorm.utils.ExtendUtils;
 import qeorm.utils.JsonUtils;
 
@@ -228,7 +229,7 @@ public class SqlResultExecutor {
     private void dealFunIntercept(Object dataSet) {
         List<Pair<String, IFunIntercept>> list = result.getSqlConfig().getFunIntercepts();
         logger.info("有{}个funIntercept需要处理", list.size());
-        if (!list.isEmpty()) {
+        if (!list.isEmpty() && dataSet instanceof List) {
             List<Map<String, Object>> dataList = (List<Map<String, Object>>) dataSet;
             for (Map<String, Object> data : dataList) {
                 for (Pair<String, IFunIntercept> intercept : list) {

@@ -19,6 +19,8 @@ public class RealClass {
         map.put("long", Long.class);
         map.put("float", Float.class);
         map.put("double", Double.class);
+        map.put("char", Character.class);
+        map.put("String", String.class);
         for (Map.Entry<String, Class> entry : map.entrySet()) {
             primitive.put(entry.getValue(), true);
         }

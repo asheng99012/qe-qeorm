@@ -17,7 +17,7 @@ dbName：数据库组名称，默认为 nameSpace的第三部分，此例中默�
         qeorm会自行分析{xxx}，当参数中有此参数时，此条件生效，否则会无视此条件
         -->
         <sql>
-            <![CDATA[ select * from `novel` where name like '%{name}%' and id in ({ids}) order by {oo} limit 10 ]]>
+            <![CDATA[ select * from `novel` where name like '%{name}%' and id in ({ids}) order by {oo}  ]]>
         </sql>
         <!--当需要返回嵌套对象时，需要sqlIntercepts配置-->
         <sqlIntercepts>

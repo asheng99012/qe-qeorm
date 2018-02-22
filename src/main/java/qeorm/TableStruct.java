@@ -70,6 +70,8 @@ public class TableStruct implements IFunIntercept {
             primaryKey = table.primaryKey();
             tableName = table.tableName();
             where = table.where();
+            slaveDbName=table.slaveDbName();
+            masterDbName=table.masterDbName();
         }
 
         isMapped = false;
