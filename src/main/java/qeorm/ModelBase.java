@@ -2,11 +2,15 @@ package qeorm;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.base.Splitter;
 import org.springframework.beans.BeanUtils;
 import org.springframework.cglib.beans.BeanMap;
 
@@ -14,8 +18,13 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 
+import org.springframework.cglib.proxy.Enhancer;
+import org.springframework.cglib.proxy.MethodInterceptor;
+import org.springframework.cglib.proxy.MethodProxy;
 import qeorm.annotation.Transient;
 import qeorm.intercept.IFunIntercept;
+import qeorm.utils.ExtendUtils;
+import qeorm.utils.JsonUtils;
 
 /**
  * Created by asheng on 2015/7/20 0020.
@@ -170,11 +179,11 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
 
     }
 
-    private String sqlIndexId(String action) {
+    protected String sqlIndexId(String action) {
         return getClass().getName() + "." + action;
     }
 
-    private SqlConfig createSqlConfig(String type) {
+    protected SqlConfig createSqlConfig(String type) {
         String sqlId = sqlIndexId(type);
         if (SqlConfigManager.getSqlConfig(sqlId) == null) {
             TableStruct table = TableStruct.getTableStruct(getClass().getName());
@@ -214,8 +223,7 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
                         sc.setTableName(_table.getTableName());
                         sc.setDbName(_table.getMasterDbName());
                         sc.setReturnType(rs.getClazz().getName());
-                        sc.setId(rs.getClazz().getName() + "." + getClass().getSimpleName() + "." + rs.getRelationKey()
-                                + ".select");
+                        sc.setId(sqlConfig.getId() + "." + rs.getFillKey());
                         sc.setFunIntercepts(null, TableStruct.instance);
                         sc.setFunIntercepts(null, (IFunIntercept) BeanUtils.instantiate(rs.getClazz()));
                         sc.setSql(StringFormat.format("select * from `{0}` where {1}", _table.getTableName(),
@@ -266,5 +274,71 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
     @Override
     public void intercept(String key, Map<String, Object> rowData, SqlResult sqlResult) {
 
+    }
+
+    public <T> T enhance() {
+        return (T) new EnhanceModel().createProxy(this);
+    }
+
+    public static class EnhanceModel<T extends ModelBase> implements MethodInterceptor {
+        private static Map<String, Field> fieldMap = new HashMap<>();
+        //要代理的原始对象
+        private T target;
+
+        public T createProxy(T target) {
+            this.target = target;
+            Enhancer enhancer = new Enhancer();
+            enhancer.setSuperclass(this.target.getClass());
+            enhancer.setCallback(this);
+            enhancer.setClassLoader(target.getClass().getClassLoader());
+            return (T) enhancer.create();
+        }
+
+        @Override
+        public Object intercept(Object o, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {
+            if (target == null) return null;
+            Object result = methodProxy.invoke(target, objects);
+            if (result == null && method.getName().startsWith("get")) {
+                String filedName = method.getName().substring(3, 4).toLowerCase() + method.getName().substring(4);
+                String id = target.sqlIndexId(SqlConfig.SELECT) + "." + filedName;
+                SqlConfig sqlConfig = target.createSqlConfig(SqlConfig.SELECT).getSqlIntercepts()
+                        .stream().filter(config -> config.getId().equals(id)).findAny().get();
+                if (sqlConfig != null) {
+                    String key = Splitter.on("|").splitToList(sqlConfig.getRelationKey()).get(0);
+                    String byFiled = TableStruct.getRealMappBy(target, key);
+                    Map data = JsonUtils.convert(target, Map.class);
+                    if (data.containsKey(byFiled)) {
+                        Map<String, Object> params = new HashMap<>();
+                        params.put(key, data.get(byFiled));
+                        SqlResult sqlResult = SqlExecutor.exec(sqlConfig, params);
+                        if (sqlResult.isOk()) {
+                            List list = (List) sqlResult.getResult();
+                            if (list.size() > 0) {
+                                if (sqlConfig.getExtend().equals(ExtendUtils.ONE2ONE)) {
+                                    result = list.get(0);
+                                } else {
+                                    result = list;
+                                }
+                                getTargetField(filedName).set(target, result);
+                            }
+
+                        }
+                    }
+                }
+            }
+
+
+            return result;
+        }
+
+        private Field getTargetField(String filedName) throws NoSuchFieldException {
+            String key = target.getClass() + "." + filedName;
+            if (!fieldMap.containsKey(key)) {
+                Field field = target.getClass().getDeclaredField(filedName);
+                field.setAccessible(true);
+                fieldMap.put(key, field);
+            }
+            return fieldMap.get(key);
+        }
     }
 }

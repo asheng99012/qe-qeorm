@@ -42,9 +42,10 @@ public class Novel extends ModelBase {
     @Column("name")
     private String myName;
     private String author;
-    private Integer tag_id;
+    @Column("tag_id")
+    private Integer tagId;
     private String desc;
-    @OneToOne(self = "tag_id", mappedBy = "id")
+    @OneToOne(self = "tagId", mappedBy = "id")
     private Tag tagInfo;
     @OneToOne(self = "id", mappedBy = "id")
     private Novel self;
@@ -97,12 +98,12 @@ public class Novel extends ModelBase {
         this.author = author;
     }
 
-    public Integer getTag_id() {
-        return tag_id;
+    public Integer getTagId() {
+        return tagId;
     }
 
-    public void setTag_id(Integer tag_id) {
-        this.tag_id = tag_id;
+    public void setTagId(Integer tagId) {
+        this.tagId = tagId;
     }
 
     public String getDesc() {
