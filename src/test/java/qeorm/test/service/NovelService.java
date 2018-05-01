@@ -14,7 +14,7 @@ public class NovelService {
 //        tag.setId(1);
 //        tag.setMyName("dsfsd");
 
-        Novel novel = new Novel().enhance();
+        Novel novel = new Novel();
         novel.setTagId(23);
         novel = novel.enhance();
         novel.getTagInfo();

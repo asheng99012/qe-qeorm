@@ -134,8 +134,11 @@ public class SqlResultExecutor {
                             Iterable t = (Iterable) val;
                             vs = Iterators.toArray(t.iterator(), Object.class);
                         }
-                        if (val.getClass().isArray())
+                        if (val.getClass().isArray()) {
                             vs = (Object[]) val;
+                        } else {
+                            vs = new Object[]{val};
+                        }
 
                     }
                     if (vs != null) {

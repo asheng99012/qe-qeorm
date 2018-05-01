@@ -23,6 +23,7 @@ import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
 import qeorm.annotation.Transient;
 import qeorm.intercept.IFunIntercept;
+import qeorm.utils.ExtendUtils;
 import qeorm.utils.JsonUtils;
 
 /**
@@ -279,7 +280,8 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
         return (T) new EnhanceModel().createProxy(this);
     }
 
-    class EnhanceModel<T extends ModelBase> implements MethodInterceptor {
+    public static class EnhanceModel<T extends ModelBase> implements MethodInterceptor {
+        private static Map<String, Field> fieldMap = new HashMap<>();
         //要代理的原始对象
         private T target;
 
@@ -310,10 +312,16 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
                         params.put(key, data.get(byFiled));
                         SqlResult sqlResult = SqlExecutor.exec(sqlConfig, params);
                         if (sqlResult.isOk()) {
-                            result = sqlResult.getResult();
-                            Class klass = TableStruct.getTableStruct(target.getClass().getName()).getRelationStructList().stream()
-                                    .filter(r -> r.getFillKey().equals(filedName)).findFirst().get().getClazz();
-                            target.getClass().getMethod("set" + method.getName().substring(3), klass).invoke(target, new Object[]{result});
+                            List list = (List) sqlResult.getResult();
+                            if (list.size() > 0) {
+                                if (sqlConfig.getExtend().equals(ExtendUtils.ONE2ONE)) {
+                                    result = list.get(0);
+                                } else {
+                                    result = list;
+                                }
+                                getTargetField(filedName).set(target, result);
+                            }
+
                         }
                     }
                 }
@@ -321,6 +329,16 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
 
 
             return result;
+        }
+
+        private Field getTargetField(String filedName) throws NoSuchFieldException {
+            String key = target.getClass() + "." + filedName;
+            if (!fieldMap.containsKey(key)) {
+                Field field = target.getClass().getDeclaredField(filedName);
+                field.setAccessible(true);
+                fieldMap.put(key, field);
+            }
+            return fieldMap.get(key);
         }
     }
 }
