@@ -129,12 +129,10 @@ public class SqlResultExecutor {
                         if (val instanceof String) {
                             Collection t = Splitter.on(",").splitToList(String.valueOf(val));
                             vs = Iterators.toArray(t.iterator(), Object.class);
-                        }
-                        if (val instanceof Iterable) {
+                        } else if (val instanceof Iterable) {
                             Iterable t = (Iterable) val;
                             vs = Iterators.toArray(t.iterator(), Object.class);
-                        }
-                        if (val.getClass().isArray()) {
+                        } else if (val.getClass().isArray()) {
                             vs = (Object[]) val;
                         } else {
                             vs = new Object[]{val};
