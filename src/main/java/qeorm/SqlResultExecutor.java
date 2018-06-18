@@ -192,7 +192,7 @@ public class SqlResultExecutor {
         sql = sql.replaceAll("\\s+\\(\\s+\\)", "()");
         sql = sql.replaceAll("\\s+\\(\\s+", "(");
         if (result.getSqlConfig().getSqlType().equals(SqlConfig.UPDATE)
-                && !sql.toLowerCase().endsWith("where 1=1 ")) {
+                && sql.toLowerCase().endsWith("where 1=1 ")) {
             throw new SqlErrorException("更新语句缺少条件，会造成全表跟新：" + sql);
         }
         result.setSql(sql);
