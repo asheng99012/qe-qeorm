@@ -9,13 +9,14 @@ import java.util.*;
  */
 public class SqlExecutor {
 
-
     public static <T> T execSql(String sql, Object obj, Class<T> returnType) {
-        return execSql(sql, JsonUtils.convert(obj, Map.class), returnType);
+        Map<String, Object> map = JsonUtils.convert(obj, Map.class);
+        return execSql(sql, map, returnType, null);
     }
 
     public static <T> T execSql(String sql, Object obj, Class<T> returnType, String dbName) {
-        return execSql(sql, JsonUtils.convert(obj, Map.class), returnType, dbName);
+        Map<String, Object> map = JsonUtils.convert(obj, Map.class);
+        return execSql(sql, map, returnType, dbName);
     }
 
     public static <T> T execSql(String sql, Class<T> returnType, String dbName) {
@@ -37,31 +38,32 @@ public class SqlExecutor {
             sqlConfig.setId(id);
             sqlConfig.setSql(sql);
             sqlConfig.setDbName(dbName);
-            if (returnType != null)
-                sqlConfig.setReturnType(returnType.getName());
+            sqlConfig.setReturnType(returnType.getName());
             SqlConfigManager.parseSql(sqlConfig);
             SqlConfigManager.addSqlConfig(sqlConfig);
         }
-        return exec(SqlConfigManager.getSqlConfig(id), map);
+        SqlResult sqlResult = exec(SqlConfigManager.getSqlConfig(id), map);
+        if (sqlResult.isOk())
+            return (T) sqlResult.getResult();
+        return null;
     }
 
-    public static <T> T exec(String sqlId) {
+    public static SqlResult exec(String sqlId) {
         return exec(sqlId, null);
     }
 
-    public static <T> T exec(String sqlId, Object obj) {
-        return exec(sqlId, JsonUtils.convert(obj, Map.class));
+    public static SqlResult exec(String sqlId, Object obj) {
+        return exec(SqlConfigManager.getSqlConfig(sqlId), JsonUtils.convert(obj, Map.class));
     }
 
-    public static <T> T exec(String sqlId, Map<String, Object> map) {
+    public static SqlResult exec(String sqlId, Map<String, Object> map) {
         return exec(SqlConfigManager.getSqlConfig(sqlId), map);
     }
 
-    public static <T> T exec(SqlConfig sqlConfig, Map<String, Object> map) {
+    public static SqlResult exec(SqlConfig sqlConfig, Map<String, Object> map) {
         SqlResult result = new SqlResultExecutor(sqlConfig, map).exec();
-        return (T) result.getResult();
+        return result;
     }
-
 
 }
 
