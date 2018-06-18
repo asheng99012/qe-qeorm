@@ -161,10 +161,7 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
         // if (sqlIndex.equals(SqlConfig.SELECT) ||
         // sqlIndex.equals(SqlConfig.COUNT))
         // this.interceptSelect();
-        SqlResult sqlResult = SqlExecutor.exec(sqlIndexId(sqlIndex), this);
-        if (sqlResult.isOk())
-            return (T) sqlResult.getResult();
-        return null;
+        return SqlExecutor.exec(sqlIndexId(sqlIndex), this);
     }
 
     public void interceptInsert(SqlConfig sqlConfig) {
