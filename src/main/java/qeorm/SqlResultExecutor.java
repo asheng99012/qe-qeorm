@@ -79,7 +79,7 @@ public class SqlResultExecutor {
     private <T> T exec(Map<String, Object> map) {
         String sql = result.getSql();
         String sqlType = result.getSqlConfig().getSqlType();
-        logger.info("要在数据库{}上执行的sql：{}，\n 参数为：{}", result.sqlConfig.getDbName(), sql, JsonUtils.toJson(map));
+        logger.info("要在数据库{}上执行的sql：{} , 参数为：{}", result.sqlConfig.getDbName(), sql, JsonUtils.toJson(map));
         NamedParameterJdbcOperations jdbc = sqlSession.getJdbcTemplate(this.result.sqlConfig.getDbName());
         if (sqlType.equals(SqlConfig.CURSOR)) {
             return (T) jdbc.query(sql, map, new RowCallbackHandlerResultSetExtractor(result.getSqlConfig().getRowCallbacks(), result));
