@@ -132,6 +132,8 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
     }
 
     public <T> T selectOne() {
+        this.pn=1;
+        this.ps=1;
         List<T> list = select();
         if (null == list || list.size() == 0)
             return null;
