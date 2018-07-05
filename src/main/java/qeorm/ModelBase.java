@@ -79,7 +79,7 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
     public int save() {
         TableStruct table = TableStruct.getTableStruct(this.getClass().getName());
         String key = table.getPrimaryField();
-        BeanMap map = BeanMap.create(this);
+        Map map = JsonUtils.convert(this,Map.class);
         if (map.containsKey(key))
             return update();
         return insert();

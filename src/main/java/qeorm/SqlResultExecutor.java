@@ -239,6 +239,7 @@ public class SqlResultExecutor {
             List<Map<String, Object>> dataList = (List<Map<String, Object>>) dataSet;
             for (Map<String, Object> data : dataList) {
                 for (Pair<String, IFunIntercept> intercept : list) {
+                    logger.info(intercept.getValue().getClass().getName());
                     intercept.getValue().intercept(intercept.getKey(), data, result);
                 }
             }
