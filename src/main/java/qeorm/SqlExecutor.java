@@ -9,29 +9,29 @@ import java.util.*;
  */
 public class SqlExecutor {
 
-    public static <T> T execSql(String sql, Object obj, Class<T> returnType) {
+    public static <T> List<T> execSql(String sql, Object obj, Class<T> returnType) {
         Map<String, Object> map = JsonUtils.convert(obj, Map.class);
         return execSql(sql, map, returnType, null);
     }
 
-    public static <T> T execSql(String sql, Object obj, Class<T> returnType, String dbName) {
+    public static <T> List<T> execSql(String sql, Object obj, Class<T> returnType, String dbName) {
         Map<String, Object> map = JsonUtils.convert(obj, Map.class);
         return execSql(sql, map, returnType, dbName);
     }
 
-    public static <T> T execSql(String sql, Class<T> returnType, String dbName) {
+    public static <T> List<T> execSql(String sql, Class<T> returnType, String dbName) {
         return execSql(sql, null, returnType, dbName);
     }
 
-    public static <T> T execSql(String sql, Class<T> returnType) {
+    public static <T> List<T> execSql(String sql, Class<T> returnType) {
         return execSql(sql, null, returnType);
     }
 
-    public static <T> T execSql(String sql, Map<String, Object> map, Class<T> returnType) {
+    public static <T> List<T> execSql(String sql, Map<String, Object> map, Class<T> returnType) {
         return execSql(sql, map, returnType, null);
     }
 
-    public static <T> T execSql(String sql, Map<String, Object> map, Class<T> returnType, String dbName) {
+    public static <T> List<T> execSql(String sql, Map<String, Object> map, Class<T> returnType, String dbName) {
         String id = sql.replaceAll("\\s+", ".");
         if (SqlConfigManager.getSqlConfig(id) == null) {
             SqlConfig sqlConfig = new SqlConfig();
@@ -44,7 +44,7 @@ public class SqlExecutor {
         }
         SqlResult sqlResult = exec(SqlConfigManager.getSqlConfig(id), map);
         if (sqlResult.isOk())
-            return (T) sqlResult.getResult();
+            return (List<T>) sqlResult.getResult();
         return null;
     }
 
