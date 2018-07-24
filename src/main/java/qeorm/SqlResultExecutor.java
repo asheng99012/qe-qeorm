@@ -235,6 +235,7 @@ public class SqlResultExecutor {
     private void dealFunIntercept(Object dataSet) {
         List<Pair<String, IFunIntercept>> list = result.getSqlConfig().getFunIntercepts();
         logger.info("有{}个funIntercept需要处理", list.size());
+        logger.info("funIntercepts需要处理", JsonUtils.toJson(list));
         if (!list.isEmpty() && dataSet instanceof List) {
             List<Map<String, Object>> dataList = (List<Map<String, Object>>) dataSet;
             for (Map<String, Object> data : dataList) {
