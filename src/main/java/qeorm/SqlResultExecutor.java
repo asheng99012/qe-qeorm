@@ -235,13 +235,15 @@ public class SqlResultExecutor {
     private void dealFunIntercept(Object dataSet) {
         List<Pair<String, IFunIntercept>> list = result.getSqlConfig().getFunIntercepts();
         logger.info("有{}个funIntercept需要处理", list.size());
-        logger.info("funIntercepts list :", JsonUtils.toJson(list));
+        logger.info("funIntercepts list :"+ JsonUtils.toJson(list));
         if (!list.isEmpty() && dataSet instanceof List) {
             List<Map<String, Object>> dataList = (List<Map<String, Object>>) dataSet;
             for (Map<String, Object> data : dataList) {
                 for (Pair<String, IFunIntercept> intercept : list) {
-                    logger.info(intercept.getValue().getClass().getName());
-                    intercept.getValue().intercept(intercept.getKey(), data, result);
+                    if(intercept!=null ){
+                        logger.info(intercept.getValue().getClass().getName());
+                        intercept.getValue().intercept(intercept.getKey(), data, result);
+                    }
                 }
             }
         }
