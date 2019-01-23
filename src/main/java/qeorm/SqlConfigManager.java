@@ -57,10 +57,11 @@ public class SqlConfigManager {
 
         String sql = sqlConfig.getSql();
         sql = sql.replaceAll("\\n", " ");
-        sql = sql.replaceAll("\\(", " \\(  ");
-        sql = sql.replaceAll("\\)", " \\)  ");
-        sql = sql.replaceAll(",", " , ");
+//        sql = sql.replaceAll("\\(", " \\(  ");
+//        sql = sql.replaceAll("\\)", " \\)  ");
+//        sql = sql.replaceAll(",", " , ");
         sql = sql.replaceAll("\\s+", " ");
+        sql=sql.trim();
         sqlConfig.setSql(sql);
         if (sql.matches(isInsertPattern))
             parseInsertSql(sqlConfig);

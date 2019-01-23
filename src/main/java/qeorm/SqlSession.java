@@ -36,6 +36,8 @@ public class SqlSession {
             new NamedThreadLocal<Map<Object, Object>>("SqlSession Transactional");
     private Logger logger = LoggerFactory.getLogger(SqlSession.class);
 
+    public static SqlSession instance;
+
     private Map<Object, Object> getResources() {
         Map<Object, Object> map = resources.get();
         if (map == null) {
@@ -93,6 +95,7 @@ public class SqlSession {
             jdbcTemplate.put(input.trim(), support);
         }
         logger.info("数据源初始化完毕");
+        instance=this;
         SqlResultExecutor.setSqlSession(this);
     }
 
@@ -105,6 +108,13 @@ public class SqlSession {
     }
 
     public NamedParameterJdbcOperations getJdbcTemplate(String _dbName) {
+
+        NamedParameterJdbcDaoSupport jdbc = getSupport(_dbName);
+
+        return jdbc.getNamedParameterJdbcTemplate();
+    }
+
+    public NamedParameterJdbcDaoSupport getSupport(String _dbName){
         String dbName = _dbName;
         if (Strings.isNullOrEmpty(_dbName)) dbName = defaultDataSource + Master;
         if (!jdbcTemplate.containsKey(dbName)) {
@@ -126,9 +136,8 @@ public class SqlSession {
         logger.info("使用的数据源是{}", dbName);
         NamedParameterJdbcDaoSupport jdbc = jdbcTemplate.get(dbName);
         setTransaction(dbName, jdbc.getDataSource());
-        return jdbc.getNamedParameterJdbcTemplate();
+        return jdbc;
     }
-
 
     private Stack<Pair<DataSourceTransactionManager, TransactionStatus>> getStack() {
         Map<Object, Object> map = getResources();

@@ -38,12 +38,20 @@ public class SqlResultExecutor {
     SqlResult result;
     Map<String, Object> oParams;
 
-    public SqlResultExecutor(SqlConfig sqlConfig, Map<String, Object> map) {
+
+    public SqlResult getResult() {
+        return result;
+    }
+
+    public SqlResultExecutor(){}
+
+    public SqlResultExecutor init(SqlConfig sqlConfig, Map<String, Object> map) {
         oParams = cloneMap(map);
         result = new SqlResult();
         result.setSqlConfig(sqlConfig);
         result.setParams(cloneMap(map));
         dealParamIntercepts();
+        return this;
     }
 
     public SqlResult exec() {
@@ -76,7 +84,7 @@ public class SqlResultExecutor {
         return result;
     }
 
-    private <T> T exec(Map<String, Object> map) {
+    public <T> T exec(Map<String, Object> map) {
         String sql = result.getSql();
         String sqlType = result.getSqlConfig().getSqlType();
         logger.info("要在数据库{}上执行的sql：{} , 参数为：{}", result.sqlConfig.getDbName(), sql, JsonUtils.toJson(map));
@@ -185,12 +193,13 @@ public class SqlResultExecutor {
         sql = sql.replaceAll("(?i)and\\s*1=1\\s+", " ");
         sql = sql.replaceAll("(?i)or\\s*1=1\\s+", " ");
         sql = sql.replaceAll("\\(+\\s*1=1\\s*\\)", " 1=1 ");
-        sql = sql.replaceAll("(?i)count\\s*\\([^\\)]+\\s*\\)", " count(1) ");
+//        sql = sql.replaceAll("(?i)count\\s*\\([^\\)]+\\s*\\)", " count(1) ");
         sql = sql.replaceAll(",\\s*1=1\\s+", " ");
         sql = sql.replaceAll("1=1\\s*,\\s+", " ");
         sql = sql.replaceAll("\\s+", " ");
         sql = sql.replaceAll("\\s+\\(\\s+\\)", "()");
-        sql = sql.replaceAll("\\s+\\(\\s+", "(");
+        sql = sql.replaceAll("\\(\\s+", "(");
+        sql = sql.replaceAll("\\s+\\)", ")");
         String type = result.getSqlConfig().getSqlType();
         if ((type.equals(SqlConfig.UPDATE) || type.equals(SqlConfig.DELETE))
                 && sql.toLowerCase().endsWith("where 1=1 ")) {
@@ -282,7 +291,7 @@ public class SqlResultExecutor {
             }
 
         }
-        SqlResult _ret = new SqlResultExecutor(realSqlConfig, map).exec();
+        SqlResult _ret = SqlExecutor.exec(realSqlConfig, map);
         result.setChilds(_ret);
         Object ret = _ret.getResult();
 
@@ -334,5 +343,7 @@ public class SqlResultExecutor {
 
         return params;
     }
+
+
 
 }
