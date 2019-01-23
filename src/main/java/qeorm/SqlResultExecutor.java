@@ -185,7 +185,7 @@ public class SqlResultExecutor {
         sql = sql.replaceAll("(?i)and\\s*1=1\\s+", " ");
         sql = sql.replaceAll("(?i)or\\s*1=1\\s+", " ");
         sql = sql.replaceAll("\\(+\\s*1=1\\s*\\)", " 1=1 ");
-        sql = sql.replaceAll("(?i)count\\s*\\([^\\)]+\\s*\\)", " count(1) ");
+//        sql = sql.replaceAll("(?i)count\\s*\\([^\\)]+\\s*\\)", " count(1) ");
         sql = sql.replaceAll(",\\s*1=1\\s+", " ");
         sql = sql.replaceAll("1=1\\s*,\\s+", " ");
         sql = sql.replaceAll("\\s+", " ");

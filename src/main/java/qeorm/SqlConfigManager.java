@@ -57,9 +57,9 @@ public class SqlConfigManager {
 
         String sql = sqlConfig.getSql();
         sql = sql.replaceAll("\\n", " ");
-        sql = sql.replaceAll("\\(", " \\(  ");
-        sql = sql.replaceAll("\\)", " \\)  ");
-        sql = sql.replaceAll(",", " , ");
+//        sql = sql.replaceAll("\\(", " \\(  ");
+//        sql = sql.replaceAll("\\)", " \\)  ");
+//        sql = sql.replaceAll(",", " , ");
         sql = sql.replaceAll("\\s+", " ");
         sqlConfig.setSql(sql);
         if (sql.matches(isInsertPattern))
