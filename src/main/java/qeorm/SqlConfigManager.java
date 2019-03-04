@@ -60,7 +60,7 @@ public class SqlConfigManager {
 //        sql = sql.replaceAll("\\(", " \\(  ");
 //        sql = sql.replaceAll("\\)", " \\)  ");
 //        sql = sql.replaceAll(",", " , ");
-        sql = sql.replaceAll("\\s+", " ");
+//        sql = sql.replaceAll("\\s+", " ");
         sqlConfig.setSql(sql);
         if (sql.matches(isInsertPattern))
             parseInsertSql(sqlConfig);
@@ -262,6 +262,14 @@ public class SqlConfigManager {
             map.put("returnType", returnType);
         SqlConfig sqlConfig = JsonUtils.convert(map, SqlConfig.class);
 
+        if (map.containsKey("ref")) {
+            SqlConfig ref = getSqlConfig(map.get("nameSpace") + "." + map.get("ref"));
+            if (ref == null)
+                throw new RuntimeException(map.get("nameSpace") + "." + map.get("ref") + ":不存在");
+            Map refMap=JsonUtils.convert(ref,Map.class);
+            refMap.putAll(JsonUtils.convert(sqlConfig,Map.class));
+            sqlConfig=JsonUtils.convert(refMap,SqlConfig.class);
+        }
         //如果ReturnType 不为空，则用TableStruct处理结果集
         if (sqlConfig.getSql().matches(isSelectPattern) && sqlConfig.getReturnType() != null) {
             sqlConfig.setFunIntercepts("all", TableStruct.instance);

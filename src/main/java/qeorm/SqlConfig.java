@@ -113,6 +113,7 @@ public class SqlConfig {
     }
 
     public void setCanEmptyParams(String canEmptyParams) {
+        if(canEmptyParams==null)return;
         this.canEmptyParams = "," + canEmptyParams + ",";
     }
 
@@ -134,6 +135,7 @@ public class SqlConfig {
     }
 
     public void setTableName(String tableName) {
+        if(tableName==null)return;
         this.tableName = tableName.replaceAll("`", "").replaceAll("'", "");
     }
 
@@ -192,6 +194,7 @@ public class SqlConfig {
     }
 
     public void setSqlIntercepts(SqlConfig sqlConfig) {
+        if(sqlConfig==null)return;
         getSqlIntercepts().add(sqlConfig);
     }
 
@@ -202,6 +205,7 @@ public class SqlConfig {
         return rowCallbacks;
     }
     public void setRowCallbacks(IRowCallback rowCallback){
+        if(rowCallback==null)return;
         getRowCallbacks().add(rowCallback);
     }
 
@@ -274,6 +278,7 @@ public class SqlConfig {
     }
 
     public void setReturnType(String returnType) {
+        if(returnType==null)return;
         this.klass=RealClass.getRealClass(returnType);
         this.returnType = this.klass.getName();
         this.isPrimitive=RealClass.isPrimitive(this.klass);
@@ -289,6 +294,7 @@ public class SqlConfig {
     }
 
     public void setFunIntercepts(String key, IFunIntercept clz) {
+        if(key==null || clz==null)return;
         getFunIntercepts().add(new MutablePair<>(key, clz));
     }
 
@@ -299,6 +305,7 @@ public class SqlConfig {
     }
 
     public void setParamIntercepts(String key, IFunIntercept clz) {
+        if(key==null || clz==null)return;
         getParamIntercepts().add(new MutablePair<>(key, clz));
     }
 
