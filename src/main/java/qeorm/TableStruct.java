@@ -70,8 +70,8 @@ public class TableStruct implements IFunIntercept {
             primaryKey = table.primaryKey();
             tableName = table.tableName();
             where = table.where();
-            slaveDbName=table.slaveDbName();
-            masterDbName=table.masterDbName();
+            slaveDbName = table.slaveDbName();
+            masterDbName = table.masterDbName();
         }
 
         isMapped = false;
@@ -147,7 +147,7 @@ public class TableStruct implements IFunIntercept {
                 relationStruct.setFillKey(field.getName());
                 relationStruct.setExtend(ExtendUtils.ONE2ONE);
                 relationStruct.setClazz(field.getType());
-                relationStruct.setWhere(" `" + tableStruct.getFcMap().get(ones.mappedBy()) + "` in ({" + fcMap.get(ones.self()) + "})");
+                relationStruct.setWhere(" `" + tableStruct.getFcMap().get(ones.mappedBy()) + "` in ({" + fcMap.get(ones.self()) + "}) " + ones.suffix());
                 relationStructList.add(relationStruct);
             } else {
                 OneToMany oneToMany = (OneToMany) obj;
@@ -160,7 +160,7 @@ public class TableStruct implements IFunIntercept {
                 relationStruct.setRelationKey(fcMap.get(oneToMany.self()) + "|" + tableStruct.getFcMap().get(oneToMany.mappedBy()));
                 relationStruct.setFillKey(field.getName());
                 relationStruct.setExtend(ExtendUtils.ONE2MANY);
-                relationStruct.setWhere(" `" + tableStruct.getFcMap().get(oneToMany.mappedBy()) + "` in ({" + fcMap.get(oneToMany.self()) + "})");
+                relationStruct.setWhere(" `" + tableStruct.getFcMap().get(oneToMany.mappedBy()) + "` in ({" + fcMap.get(oneToMany.self()) + "}) " + oneToMany.suffix());
                 relationStructList.add(relationStruct);
             }
         }

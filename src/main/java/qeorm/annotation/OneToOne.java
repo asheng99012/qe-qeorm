@@ -11,6 +11,9 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface OneToOne {
-    String self() ;
-    String mappedBy() ;
+    String self();
+
+    String mappedBy();
+
+    String suffix() default "";
 }

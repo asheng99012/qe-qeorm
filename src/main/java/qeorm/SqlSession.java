@@ -36,6 +36,8 @@ public class SqlSession {
             new NamedThreadLocal<Map<Object, Object>>("SqlSession Transactional");
     private Logger logger = LoggerFactory.getLogger(SqlSession.class);
 
+    public static SqlSession instance;
+
     private Map<Object, Object> getResources() {
         Map<Object, Object> map = resources.get();
         if (map == null) {
@@ -45,22 +47,12 @@ public class SqlSession {
         return map;
     }
 
-    public void beginTransaction(){
-        getResources().put("isTransaction", true);
+    public void beginTransaction() {
         setTransactionCount(true);
     }
-    @Deprecated
-    public void setTransaction(boolean transaction) {
-        getResources().put("isTransaction", transaction);
-        setTransactionCount(transaction);
-    }
-
 
     private boolean isTransaction() {
-        Map<Object, Object> map = getResources();
-        if (map.containsKey("isTransaction"))
-            return (Boolean) map.get("isTransaction");
-        return false;
+        return getTransactionCount() > 0;
     }
 
     private int getTransactionCount() {
@@ -75,7 +67,7 @@ public class SqlSession {
         if (plus) count = count + 1;
         else count = count - 1;
         getResources().put("transactionCount", count);
-        logger.info("当前事务深度为："+count);
+        logger.info("当前事务深度为：" + count);
         return count;
     }
 
@@ -93,6 +85,7 @@ public class SqlSession {
             jdbcTemplate.put(input.trim(), support);
         }
         logger.info("数据源初始化完毕");
+        instance = this;
         SqlResultExecutor.setSqlSession(this);
     }
 
@@ -105,6 +98,13 @@ public class SqlSession {
     }
 
     public NamedParameterJdbcOperations getJdbcTemplate(String _dbName) {
+
+        NamedParameterJdbcDaoSupport jdbc = getSupport(_dbName);
+
+        return jdbc.getNamedParameterJdbcTemplate();
+    }
+
+    public NamedParameterJdbcDaoSupport getSupport(String _dbName) {
         String dbName = _dbName;
         if (Strings.isNullOrEmpty(_dbName)) dbName = defaultDataSource + Master;
         if (!jdbcTemplate.containsKey(dbName)) {
@@ -119,16 +119,15 @@ public class SqlSession {
         if (isTransaction() && dbName.endsWith(Slave))
             dbName = dbName.replace(Slave, Master);
 
-        if (!jdbcTemplate.containsKey(dbName)){
+        if (!jdbcTemplate.containsKey(dbName)) {
             logger.error("数据源" + dbName + "不存在", new DataSourceNotExistException("数据源" + dbName + "不存在"));
             throw new DataSourceNotExistException("数据源" + dbName + "不存在");
         }
         logger.info("使用的数据源是{}", dbName);
         NamedParameterJdbcDaoSupport jdbc = jdbcTemplate.get(dbName);
         setTransaction(dbName, jdbc.getDataSource());
-        return jdbc.getNamedParameterJdbcTemplate();
+        return jdbc;
     }
-
 
     private Stack<Pair<DataSourceTransactionManager, TransactionStatus>> getStack() {
         Map<Object, Object> map = getResources();

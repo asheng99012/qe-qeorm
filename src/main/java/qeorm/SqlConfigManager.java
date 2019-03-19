@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,13 +29,14 @@ import static qeorm.utils.XmlUtils.getAttributes;
  */
 public class SqlConfigManager {
     private static Logger logger = LoggerFactory.getLogger(SqlConfigManager.class);
-    private static Map<String, SqlConfig> sqlConfigMap = new HashMap<String, SqlConfig>();
+    private static Map<String, SqlConfig> sqlConfigMap = new ConcurrentHashMap<>();
 
     private static int dsIdenty = 3;
 
     public static String sqlSelectPattern = "\\s+(?i)([`\\.'a-zA-Z\\d_]+){1}\\s*(!=|>=|=<|=>|<=|<|>|=|\\s+like\\s+|\\s+in\\s+|\\s+not\\s+in\\s+|\\s+by\\s+){1}\\s*([\\(%'`\\.'a-zA-Z\\d_\\+\\-\\s]+){0,1}\\s*(\\{\\s*([a-zA-Z\\d_]+)\\s*\\}){1}(\\s*[\\)%']+){0,1}";
     public static String sqlInsertPattern = "\\{([a-zA-Z\\d_]+)+\\}";
     public static String sqlAndOrPattern = "\\s+(?i)([`\\.'a-zA-Z\\d_]+){1}\\s*(&|\\|){1}\\s*(\\{\\s*([a-zA-Z\\d_]+)\\s*\\}){1}\\s*=\\s*(\\{\\s*([a-zA-Z\\d_]+)\\s*\\}){1}";
+    public static String sqlTablePattern = "\\s+(?i)(from|join|into|update)\\s+([`\\.a-zA-Z\\d_]+){1}";
 
     public static String isCountPattern = "^\\s*(?i)select\\s+count\\s*\\(.+?\\)\\s+.+";
     public static String isSelectPattern = "^\\s*(?i)select\\s+.+";
@@ -61,10 +63,12 @@ public class SqlConfigManager {
 //        sql = sql.replaceAll("\\)", " \\)  ");
 //        sql = sql.replaceAll(",", " , ");
 //        sql = sql.replaceAll("\\s+", " ");
+        sql = " " + sql.trim();
         sqlConfig.setSql(sql);
         if (sql.matches(isInsertPattern))
             parseInsertSql(sqlConfig);
         else parseSelectSql(sqlConfig);
+        parseTableName(sqlConfig);
         String sqlType;
         if (sql.matches(SqlConfigManager.isCountPattern)) {
             sqlType = SqlConfig.COUNT;
@@ -179,6 +183,17 @@ public class SqlConfigManager {
         sqlConfig.setFfList(ffList);
     }
 
+    private static void parseTableName(SqlConfig sqlConfig) {
+        Matcher om = Pattern.compile(sqlTablePattern).matcher(sqlConfig.getSql());
+        while (om.find()) {
+            String name = om.group(2);
+            name = name.replaceAll("`", "");
+            if (name.indexOf(".") > 0)
+                name = name.substring(name.indexOf(".") + 1);
+            sqlConfig.setTableNameList(name);
+        }
+    }
+
     /**
      * 根据id获取sqlconfig
      *
@@ -266,9 +281,9 @@ public class SqlConfigManager {
             SqlConfig ref = getSqlConfig(map.get("nameSpace") + "." + map.get("ref"));
             if (ref == null)
                 throw new RuntimeException(map.get("nameSpace") + "." + map.get("ref") + ":不存在");
-            Map refMap=JsonUtils.convert(ref,Map.class);
-            refMap.putAll(JsonUtils.convert(sqlConfig,Map.class));
-            sqlConfig=JsonUtils.convert(refMap,SqlConfig.class);
+            Map refMap = JsonUtils.convert(ref, Map.class);
+            refMap.putAll(JsonUtils.convert(sqlConfig, Map.class));
+            sqlConfig = JsonUtils.convert(refMap, SqlConfig.class);
         }
         //如果ReturnType 不为空，则用TableStruct处理结果集
         if (sqlConfig.getSql().matches(isSelectPattern) && sqlConfig.getReturnType() != null) {
