@@ -43,7 +43,8 @@ public class SqlResultExecutor {
         return result;
     }
 
-    public SqlResultExecutor(){}
+    public SqlResultExecutor() {
+    }
 
     public SqlResultExecutor init(SqlConfig sqlConfig, Map<String, Object> map) {
         oParams = cloneMap(map);
@@ -79,12 +80,15 @@ public class SqlResultExecutor {
                 oParams.remove("pn");
         }
         dealSqlIntercepts();
-        if (!result.sqlConfig.isPrimitive()) dealReturnType();
+        if (!result.sqlConfig.isPrimitive())
+            dealReturnType();
+        else
+            result.setResult(JsonUtils.convert(result.getResult(), result.getSqlConfig().getKlass()));
 
         return result;
     }
 
-    public  <T> T exec(Map<String, Object> map) {
+    public <T> T exec(Map<String, Object> map) {
         String sql = result.getSql();
         String sqlType = result.getSqlConfig().getSqlType();
         logger.info("要在数据库{}上执行的sql：{} , 参数为：{}", result.sqlConfig.getDbName(), sql, JsonUtils.toJson(map));
@@ -190,14 +194,18 @@ public class SqlResultExecutor {
             int start = ps * (pn - 1);
             sql = sql + " limit " + start + " , " + ps;
         }
-        sql = sql.replaceAll("(?i)1=1\\s*or\\s+", " ");
-        sql = sql.replaceAll("\\(+\\s*1=1\\s*\\)", " 1=1 ");
-        sql = sql.replaceAll("(?i)and\\s*1=1\\s+", " ");
-        sql = sql.replaceAll("(?i)or\\s*1=1\\s+", " ");
-        sql = sql.replaceAll("\\(+\\s*1=1\\s*\\)", " 1=1 ");
-//        sql = sql.replaceAll("(?i)count\\s*\\([^\\)]+\\s*\\)", " count(1) ");
-        sql = sql.replaceAll(",\\s*1=1\\s+", " ");
-        sql = sql.replaceAll("1=1\\s*,\\s+", " ");
+        sql=replaceWhere(sql);
+
+//        sql = sql.replaceAll("(?i)1=1\\s*or\\s+", " ");
+//        sql = sql.replaceAll("\\(+\\s*1=1\\s*\\)", " 1=1 ");
+//        sql = sql.replaceAll("(?i)and\\s*1=1\\s+", " ");
+//        sql = sql.replaceAll("(?i)or\\s*1=1\\s+", " ");
+//        sql = sql.replaceAll("\\(+\\s*1=1\\s*\\)", " 1=1 ");
+////        sql = sql.replaceAll("(?i)count\\s*\\([^\\)]+\\s*\\)", " count(1) ");
+//        //update
+//        sql = sql.replaceAll(",\\s*1=1\\s*", " ");
+//        sql = sql.replaceAll("1=1\\s*,", " ");
+
         sql = sql.replaceAll("\\s+", " ");
         sql = sql.replaceAll("\\s+\\(\\s+\\)", "()");
         sql = sql.replaceAll("\\(\\s+", "(");
@@ -208,6 +216,24 @@ public class SqlResultExecutor {
             throw new SqlErrorException("更新语句缺少条件，会造成全表跟新：" + sql);
         }
         result.setSql(sql);
+    }
+
+
+    public String replaceWhere(String sql) {
+        sql = sql.replaceAll(",\\s*1=1\\s*", " ");
+        sql = sql.replaceAll("1=1\\s*,", " ");
+        sql = sql.replaceAll("(?i)1=1\\s+or\\s+", " ");
+        sql = sql.replaceAll("(?i)\\s+or\\s+1=1\\s*", " ");
+        sql = sql.replaceAll("(?i)\\s+and\\s+1=1\\s*", " ");
+        sql = sql.replaceAll("\\(+\\s*1=1\\s*\\)", " 1=1 ");
+        if (sql.matches(".*,\\s*1=1\\s*.*")
+                || sql.matches(".*1=1\\s*,.*")
+                || sql.matches("(?i).*1=1\\s+or\\s+.*")
+                || sql.matches("(?i).*\\s+or\\s+1=1\\s*.*")
+                || sql.matches("(?i).*\\s+and\\s+1=1\\s*.*")
+                || sql.matches(".*\\(+\\s*1=1\\s*\\).*"))
+            sql = replaceWhere(sql);
+        return sql;
     }
 
     private void createInsertSql() {
@@ -226,10 +252,10 @@ public class SqlResultExecutor {
             }
             index = index + 1;
         }
-        sql = sql.replaceAll(",\\s\\s", "");
-        sql = sql.replaceAll("\\s\\s", "");
-        sql = sql.replaceAll("\\(,", "(");
-        sql = sql.replaceAll(",\\)", ")");
+        sql = sql.replaceAll(",(\\s*,)+", ",");
+//        sql = sql.replaceAll("\\s\\s", "");
+        sql = sql.replaceAll("\\(\\s*,", "(");
+        sql = sql.replaceAll(",\\s*\\)", ")");
         result.setSql(sql);
     }
 
@@ -246,12 +272,12 @@ public class SqlResultExecutor {
     private void dealFunIntercept(Object dataSet) {
         List<Pair<String, IFunIntercept>> list = result.getSqlConfig().getFunIntercepts();
         logger.info("有{}个funIntercept需要处理", list.size());
-        logger.info("funIntercepts list :"+ JsonUtils.toJson(list));
+        logger.info("funIntercepts list :" + JsonUtils.toJson(list));
         if (!list.isEmpty() && dataSet instanceof List) {
             List<Map<String, Object>> dataList = (List<Map<String, Object>>) dataSet;
             for (Map<String, Object> data : dataList) {
                 for (Pair<String, IFunIntercept> intercept : list) {
-                    if(intercept!=null ){
+                    if (intercept != null) {
                         logger.info(intercept.getValue().getClass().getName());
                         intercept.getValue().intercept(intercept.getKey(), data, result);
                     }
@@ -345,7 +371,6 @@ public class SqlResultExecutor {
 
         return params;
     }
-
 
 
 }

@@ -121,6 +121,8 @@ public class SqlExecutor {
         String className = "qeorm.";
         if (url.indexOf("elasticsearch") > -1)
             className = className + "EsResultExecutor";
+        else if(url.indexOf("mongodb") > -1)
+            className = className + "MongoDbExecutor";
         else
             className = className + "SqlResultExecutor";
         try {

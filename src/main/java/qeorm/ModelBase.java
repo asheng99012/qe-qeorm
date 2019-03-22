@@ -185,6 +185,10 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
         return getClass().getName() + "." + action;
     }
 
+    protected boolean primaryKeyIntoDb(){
+        return true;
+    }
+
     protected SqlConfig createSqlConfig(String type) {
         String sqlId = sqlIndexId(type);
         if (SqlConfigManager.getSqlConfig(sqlId) == null) {
@@ -196,7 +200,7 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
                 List<String> ff = Lists.newArrayList();
                 List<String> vv = Lists.newArrayList();
                 for (TableColumn tc : table.getTableColumnList()) {
-                    if (tc.getClumnName().equals(table.getPrimaryKey()))
+                    if (primaryKeyIntoDb() && tc.getClumnName().equals(table.getPrimaryKey()) )
                         continue;
                     ff.add("`" + tc.getClumnName() + "`");
                     vv.add("{" + tc.getFiledName() + "}");
@@ -241,7 +245,7 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
 
             if (SqlConfig.COUNT.equals(type)) {
                 interceptSelect(sqlConfig);
-                sqlConfig.setSql(StringFormat.format("select count(1) from `{0}` where {1}", table.getTableName(),
+                sqlConfig.setSql(StringFormat.format("select count(*) from `{0}` where {1}", table.getTableName(),
                         table.getWhere()));
                 sqlConfig.setDbName(table.getSlaveDbName());
             }
