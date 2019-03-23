@@ -165,16 +165,20 @@ public class SqlResultExecutor {
                         String _ps = Joiner.on(",").join(ps);
                         temp = node.getWhole().replace(node.getParamWhole(), _ps);
                     } else {
-                        temp =node.getWholePrefix()+ " 1=1 ";
+                        temp = node.getWholePrefix() + " 1=1 ";
                     }
                 } else {
-                    temp = node.getWhole().replace(node.getParamWhole(), ":" + node.getParam());
+                    if (map.get(node.getParam()) != null || result.getSqlConfig().getSqlType().equals(SqlConfig.UPDATE)) {
+                        temp = node.getWhole().replace(node.getParamWhole(), ":" + node.getParam());
+                    } else {
+                        temp = node.getWhole().replace(node.getOperator(), " is ").replace(node.getParamWhole(), "null");
+                    }
                 }
             } else {
                 if (!node.isBy())
-                    temp = node.getWholePrefix()+" 1=1 ";
+                    temp = node.getWholePrefix() + " 1=1 ";
             }
-            sql = sql.replace(node.getWhole(),  " " + temp + " ");
+            sql = sql.replace(node.getWhole(), " " + temp + " ");
         }
 
         for (SqlAndOrNode node : result.getSqlConfig().getAndOrNodes()) {
@@ -194,7 +198,7 @@ public class SqlResultExecutor {
             int start = ps * (pn - 1);
             sql = sql + " limit " + start + " , " + ps;
         }
-        sql=replaceWhere(sql);
+        sql = replaceWhere(sql);
 
 //        sql = sql.replaceAll("(?i)1=1\\s*or\\s+", " ");
 //        sql = sql.replaceAll("\\(+\\s*1=1\\s*\\)", " 1=1 ");
