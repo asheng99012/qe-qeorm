@@ -5,10 +5,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.google.common.base.Splitter;
 import org.springframework.beans.BeanUtils;
@@ -51,11 +48,23 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
     @Transient
     private Boolean withRelation;
 
+    @Transient
+    private Set<String> nullSet;
+
     public Boolean isWithRelation() {
         return withRelation;
     }
 
     public ModelBase() {
+        nullSet = new HashSet<>();
+    }
+
+    public void addKeyNullSet(String key) {
+        nullSet.add(key);
+    }
+
+    public void removeKeyNullSet(String key) {
+        if (nullSet.contains(key)) nullSet.remove(key);
     }
 
     public Integer getPn() {
@@ -79,7 +88,7 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
     public int save() {
         TableStruct table = TableStruct.getTableStruct(this.getClass().getName());
         String key = table.getPrimaryField();
-        Map map = JsonUtils.convert(this,Map.class);
+        Map map = JsonUtils.convert(this, Map.class);
         if (map.containsKey(key))
             return update();
         return insert();
@@ -132,8 +141,8 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
     }
 
     public <T> T selectOne() {
-        this.pn=1;
-        this.ps=1;
+        this.pn = 1;
+        this.ps = 1;
         List<T> list = select();
         if (null == list || list.size() == 0)
             return null;
@@ -163,7 +172,11 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
         // if (sqlIndex.equals(SqlConfig.SELECT) ||
         // sqlIndex.equals(SqlConfig.COUNT))
         // this.interceptSelect();
-        SqlResult sqlResult = SqlExecutor.exec(sqlIndexId(sqlIndex), this);
+        Map<String, Object> params = JsonUtils.convert(this, Map.class);
+        for (String str : nullSet) {
+            params.put(str, null);
+        }
+        SqlResult sqlResult = SqlExecutor.exec(sqlIndexId(sqlIndex), params);
         if (sqlResult.isOk())
             return (T) sqlResult.getResult();
         return null;
@@ -185,7 +198,7 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
         return getClass().getName() + "." + action;
     }
 
-    protected boolean primaryKeyIntoDb(){
+    protected boolean primaryKeyIntoDb() {
         return true;
     }
 
@@ -200,7 +213,7 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
                 List<String> ff = Lists.newArrayList();
                 List<String> vv = Lists.newArrayList();
                 for (TableColumn tc : table.getTableColumnList()) {
-                    if (primaryKeyIntoDb() && tc.getClumnName().equals(table.getPrimaryKey()) )
+                    if (primaryKeyIntoDb() && tc.getClumnName().equals(table.getPrimaryKey()))
                         continue;
                     ff.add("`" + tc.getClumnName() + "`");
                     vv.add("{" + tc.getFiledName() + "}");
@@ -304,6 +317,12 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
         public Object intercept(Object o, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {
             if (target == null) return null;
             Object result = methodProxy.invoke(target, objects);
+            if (method.getName().startsWith("set")) {
+                String filedName = method.getName().substring(3, 4).toLowerCase() + method.getName().substring(4);
+                Object val = objects[0];
+                if (val == null) target.addKeyNullSet(filedName);
+                else target.removeKeyNullSet(filedName);
+            }
             if (result == null && method.getName().startsWith("get")) {
                 String filedName = method.getName().substring(3, 4).toLowerCase() + method.getName().substring(4);
                 String id = target.sqlIndexId(SqlConfig.SELECT) + "." + filedName;
