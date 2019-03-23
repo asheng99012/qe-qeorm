@@ -165,16 +165,16 @@ public class SqlResultExecutor {
                         String _ps = Joiner.on(",").join(ps);
                         temp = node.getWhole().replace(node.getParamWhole(), _ps);
                     } else {
-                        temp = " 1=1 ";
+                        temp =node.getWholePrefix()+ " 1=1 ";
                     }
                 } else {
                     temp = node.getWhole().replace(node.getParamWhole(), ":" + node.getParam());
                 }
             } else {
                 if (!node.isBy())
-                    temp = " 1=1 ";
+                    temp = node.getWholePrefix()+" 1=1 ";
             }
-            sql = sql.replace(node.getWhole(), " " + temp + " ");
+            sql = sql.replace(node.getWhole(),  " " + temp + " ");
         }
 
         for (SqlAndOrNode node : result.getSqlConfig().getAndOrNodes()) {
