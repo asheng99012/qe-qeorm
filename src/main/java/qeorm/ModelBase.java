@@ -296,16 +296,22 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
     }
 
     public <T> T enhance() {
-        return (T) new EnhanceModel().createProxy(this);
+        return (T) enhance(false);
+    }
+
+    public <T> T enhance(boolean deep) {
+        return (T) new EnhanceModel().createProxy(this, deep);
     }
 
     public static class EnhanceModel<T extends ModelBase> implements MethodInterceptor {
         private static Map<String, Field> fieldMap = new HashMap<>();
         //要代理的原始对象
         private T target;
+        private boolean deep;
 
-        public T createProxy(T target) {
+        public T createProxy(T target, boolean deep) {
             this.target = target;
+            this.deep = deep;
             Enhancer enhancer = new Enhancer();
             enhancer.setSuperclass(this.target.getClass());
             enhancer.setCallback(this);
@@ -339,10 +345,14 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
                         if (sqlResult.isOk()) {
                             List list = (List) sqlResult.getResult();
                             if (list.size() > 0) {
+                                List _list = new ArrayList();
+                                for (int i = 0; i < list.size(); i++) {
+                                    _list.add(enhance(list.get(i)));
+                                }
                                 if (sqlConfig.getExtend().equals(ExtendUtils.ONE2ONE)) {
-                                    result = list.get(0);
+                                    result = _list.get(0);
                                 } else {
-                                    result = list;
+                                    result = _list;
                                 }
                                 getTargetField(filedName).set(target, result);
                             }
@@ -354,6 +364,12 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
 
 
             return result;
+        }
+
+        private Object enhance(Object obj) {
+            if (deep && obj instanceof ModelBase)
+                return ((ModelBase) obj).enhance();
+            return obj;
         }
 
         private Field getTargetField(String filedName) throws NoSuchFieldException {
