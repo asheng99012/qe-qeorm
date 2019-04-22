@@ -38,11 +38,11 @@ public class SqlConfigManager {
     public static String sqlAndOrPattern = "\\s+(?i)([`\\.'a-zA-Z\\d_]+){1}\\s*(&|\\|){1}\\s*(\\{\\s*([a-zA-Z\\d_]+)\\s*\\}){1}\\s*=\\s*(\\{\\s*([a-zA-Z\\d_]+)\\s*\\}){1}";
     public static String sqlTablePattern = "\\s+(?i)(from|join|into|update)\\s+([`\\.a-zA-Z\\d_]+){1}";
 
-    public static String isCountPattern = "^\\s*(?i)select\\s+count\\s*\\(.+?\\)\\s+from.+";
-    public static String isSelectPattern = "^\\s*(?i)select\\s+.+";
-    public static String isUpdatePattern = "^\\s*(?i)update\\s+.+";
-    public static String isDeletePattern = "^\\s*(?i)delete\\s+.+";
-    public static String isInsertPattern = "^\\s*(?i)insert\\s+.+";
+    public static String isCountPattern = "^\\s*(?i)select\\s+count\\s*\\(.+?\\)\\s+from[\\s\\S]+";
+    public static String isSelectPattern = "^\\s*(?i)select\\s+[\\s\\S]+";
+    public static String isUpdatePattern = "^\\s*(?i)update\\s+[\\s\\S]+";
+    public static String isDeletePattern = "^\\s*(?i)delete\\s+[\\s\\S]+";
+    public static String isInsertPattern = "^\\s*(?i)insert\\s+[\\s\\S]+";
 
     public static void setDsIdenty(int _dsIdenty) {
         dsIdenty = _dsIdenty;
