@@ -1,6 +1,5 @@
 package qeorm;
 
-import com.alibaba.fastjson.TypeReference;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import org.slf4j.Logger;

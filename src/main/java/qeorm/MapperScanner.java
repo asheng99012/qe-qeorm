@@ -6,13 +6,15 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.util.StringUtils;
 
 /**
  * Created by ashen on 2017-2-3.
  */
-public class MapperScanner implements BeanDefinitionRegistryPostProcessor {
+@ConfigurationProperties(prefix = "qeorm.mapper")
+public class MapperScanner {
     Logger logger = LoggerFactory.getLogger(getClass());
     //要扫描的包
     private String basePackage;
@@ -32,6 +34,7 @@ public class MapperScanner implements BeanDefinitionRegistryPostProcessor {
         this.basePackage = basePackage;
     }
 
+
     public void setInterval(int interval) {
         this.interval = interval;
     }
@@ -40,22 +43,19 @@ public class MapperScanner implements BeanDefinitionRegistryPostProcessor {
         this.mapperLocations = mapperLocations;
     }
 
-    public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
-        logger.info("SqlConfigScanner.postProcessBeanDefinitionRegistry");
-        ClassPathScanner scanner = new ClassPathScanner(registry);
-        scanner.registerFilters();
-        scanner.scan(StringUtils.tokenizeToStringArray(this.basePackage, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS));
-        try {
-            SqlConfigManager.setDsIdenty(dsIdenty);
-            SqlConfigManager.scan(StringUtils.tokenizeToStringArray(this.mapperLocations, ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS));
-            if (interval > 0) Hotload.init(this, interval);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public String getBasePackage() {
+        return basePackage;
     }
 
-    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+    public String getMapperLocations() {
+        return mapperLocations;
+    }
+
+    public int getDsIdenty() {
+        return dsIdenty;
+    }
+
+    public void init(){
 
     }
 }

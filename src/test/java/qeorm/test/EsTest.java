@@ -17,7 +17,7 @@ import java.util.*;
 public class EsTest {
     SqlSession session;
 
-    @Before
+//    @Before
     public void setup() throws Exception {
         session = new SqlSession();
         Properties properties = new Properties();
@@ -30,7 +30,7 @@ public class EsTest {
         session.setDataSources(dataSources);
     }
 
-    @Test
+//    @Test
     public void select() {
         Object list;
 //        list = SqlExecutor.execSql("SELECT * FROM dkbs_new/houseSource limit 1,4", new HashMap<>(), Map.class, "esMaster");

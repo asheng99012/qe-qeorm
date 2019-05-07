@@ -1,24 +1,30 @@
 package qeorm;
 
-import com.google.common.base.Function;
+import com.alibaba.druid.pool.DruidDataSource;
+import com.alibaba.druid.pool.DruidDataSourceFactory;
 import com.google.common.base.Strings;
-import com.google.common.collect.Collections2;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.Around;
-import org.aspectj.lang.annotation.Aspect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.cglib.beans.BeanMap;
 import org.springframework.core.NamedThreadLocal;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcDaoSupport;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.TransactionStatus;
+import org.springframework.util.ReflectionUtils;
+import qeorm.utils.ClassUtils;
+import qeorm.utils.JsonUtils;
 
 import javax.sql.DataSource;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
@@ -27,6 +33,7 @@ import java.util.Stack;
  * Created by ashen on 2017-2-4.
  */
 
+@ConfigurationProperties(prefix = "qeorm.datasource")
 public class SqlSession {
 
     public final static String Master = "Master";
@@ -74,7 +81,11 @@ public class SqlSession {
     //----------------
 
     private static Map<String, NamedParameterJdbcDaoSupport> jdbcTemplate = new HashMap<String, NamedParameterJdbcDaoSupport>();
+
+    //    @Value("${qeorm.defaultDataSource}")
     private String defaultDataSource;
+
+    private Map<String, Map<String, String>> dataSourcesMap;
 
     public void setDataSources(final Map<String, DataSource> dataSources) {
         String[] keys = Iterators.toArray(dataSources.keySet().iterator(), String.class);
@@ -91,6 +102,29 @@ public class SqlSession {
 
     public void setDefaultDataSource(String _defaultDataSource) {
         defaultDataSource = _defaultDataSource;
+    }
+
+    //    @Value("${qeorm.dataSourcesMap}")
+    public void setDataSourcesMap(Map<String, Map<String, String>> dataSourcesMap) throws ClassNotFoundException, IllegalAccessException, InstantiationException, SQLException {
+        if (dataSourcesMap == null) return;
+        Map<String, String> defaultConfig = dataSourcesMap.get("defaultConfig");
+        if (defaultConfig == null)
+            throw new RuntimeException("defaultConfig不能为空");
+        Map<String, DataSource> dataSources = new HashMap<>();
+        for (Map.Entry<String, Map<String, String>> entry : dataSourcesMap.entrySet()) {
+            if (!entry.getKey().equals("defaultConfig")) {
+                Map<String, String> config = new HashMap<>();
+                config.putAll(defaultConfig);
+                config.putAll(entry.getValue());
+                DruidDataSource dataSource = (DruidDataSource) Class.forName(config.get("class")).newInstance();
+
+                ClassUtils.config(dataSource,config);
+
+                dataSource.init();
+                dataSources.put(entry.getKey(), dataSource);
+            }
+        }
+        setDataSources(dataSources);
     }
 
     public NamedParameterJdbcOperations getJdbcTemplate() {
