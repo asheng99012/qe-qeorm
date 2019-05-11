@@ -1,5 +1,6 @@
 package qeorm;
 
+import com.alibaba.druid.pool.DruidAbstractDataSource;
 import com.alibaba.druid.pool.DruidDataSource;
 import com.alibaba.druid.pool.DruidDataSourceFactory;
 import com.google.common.base.Strings;
@@ -116,11 +117,11 @@ public class SqlSession {
                 Map<String, String> config = new HashMap<>();
                 config.putAll(defaultConfig);
                 config.putAll(entry.getValue());
-                DruidDataSource dataSource = (DruidDataSource) Class.forName(config.get("class")).newInstance();
+                DruidAbstractDataSource dataSource = (DruidAbstractDataSource) Class.forName(config.get("class")).newInstance();
 
-                ClassUtils.config(dataSource,config);
-
-                dataSource.init();
+                ClassUtils.config(dataSource, config);
+                if (dataSource instanceof DruidDataSource)
+                    ((DruidDataSource) dataSource).init();
                 dataSources.put(entry.getKey(), dataSource);
             }
         }
