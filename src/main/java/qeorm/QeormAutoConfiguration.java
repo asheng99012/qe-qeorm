@@ -1,22 +1,16 @@
 package qeorm;
 
-import com.alibaba.druid.pool.DruidAbstractDataSource;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.event.ContextRefreshedEvent;
-import org.springframework.core.annotation.Order;
+import org.springframework.core.Ordered;
 import org.springframework.core.env.Environment;
 
-import javax.sql.DataSource;
-import java.util.Map;
-
 @Configuration
-public class QeormConfig {
+@AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE)
+public class QeormAutoConfiguration {
 
     @Bean
     @ConditionalOnProperty(prefix = "qeorm.mapper", name = "basePackage")

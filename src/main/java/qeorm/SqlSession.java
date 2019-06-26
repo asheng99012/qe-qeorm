@@ -13,6 +13,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cglib.beans.BeanMap;
 import org.springframework.core.NamedThreadLocal;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcDaoSupport;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
@@ -22,6 +24,7 @@ import qeorm.utils.ClassUtils;
 import qeorm.utils.JsonUtils;
 
 import javax.sql.DataSource;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
@@ -29,6 +32,8 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
+
+import org.yaml.snakeyaml.Yaml;
 
 /**
  * Created by ashen on 2017-2-4.
@@ -45,6 +50,23 @@ public class SqlSession {
     private Logger logger = LoggerFactory.getLogger(SqlSession.class);
 
     public static SqlSession instance;
+    public Map<String, String> defaultConfig;
+
+    public SqlSession() {
+        defaultConfig = new HashMap<>();
+        try {
+            Resource[] resources = new PathMatchingResourcePatternResolver().getResources("classpath*:defultQeormConfig.yml");
+            Map config = null;
+            config = new Yaml().loadAs(resources[0].getInputStream(), Map.class);
+            config = JsonUtils.convert(config.get("qeorm"), Map.class);
+            config = JsonUtils.convert(config.get("datasource"), Map.class);
+            config = JsonUtils.convert(config.get("defaultConfig"), Map.class);
+            defaultConfig = config;
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage(), e.getCause());
+        }
+
+    }
 
     private Map<Object, Object> getResources() {
         Map<Object, Object> map = resources.get();
@@ -108,9 +130,9 @@ public class SqlSession {
     //    @Value("${qeorm.dataSourcesMap}")
     public void setDataSourcesMap(Map<String, Map<String, String>> dataSourcesMap) throws ClassNotFoundException, IllegalAccessException, InstantiationException, SQLException {
         if (dataSourcesMap == null) return;
-        Map<String, String> defaultConfig = dataSourcesMap.get("defaultConfig");
-        if (defaultConfig == null)
-            throw new RuntimeException("defaultConfig不能为空");
+        Map<String, String> _defaultConfig = dataSourcesMap.get("defaultConfig");
+        if (_defaultConfig != null)
+            defaultConfig.putAll(_defaultConfig);
         Map<String, DataSource> dataSources = new HashMap<>();
         for (Map.Entry<String, Map<String, String>> entry : dataSourcesMap.entrySet()) {
             if (!entry.getKey().equals("defaultConfig")) {

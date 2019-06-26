@@ -1,0 +1,20 @@
+qeorm:
+  datasource:
+    defaultConfig:
+      class: com.alibaba.druid.pool.DruidDataSource
+      driverClassName: com.mysql.cj.jdbc.Driver
+      maxActive: 100
+      initialSize: 5
+      maxWait: 6000
+      minIdle: 1
+      timeBetweenEvictionRunsMillis: 3000
+      minEvictableIdleTimeMillis: 300000
+      validationQuery: select 1
+      testWhileIdle: true
+      testOnBorrow: false
+      testOnReturn: true
+      poolPreparedStatements: false
+      maxPoolPreparedStatementPerConnectionSize: 20
+      removeAbandoned: true
+      removeAbandonedTimeout: 1800
+      logAbandoned: true
