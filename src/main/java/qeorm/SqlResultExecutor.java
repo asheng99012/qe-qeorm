@@ -229,12 +229,14 @@ public class SqlResultExecutor {
         sql = sql.replaceAll("(?i)1=1\\s+or\\s+", " ");
         sql = sql.replaceAll("(?i)\\s+or\\s+1=1\\s*", " ");
         sql = sql.replaceAll("(?i)\\s+and\\s+1=1\\s*", " ");
+        sql = sql.replaceAll("(?i)\\s+1=1\\s+and\\s*", " ");
         sql = sql.replaceAll("\\(+\\s*1=1\\s*\\)", " 1=1 ");
         if (sql.matches(".*,\\s*1=1\\s*.*")
                 || sql.matches(".*1=1\\s*,.*")
                 || sql.matches("(?i).*1=1\\s+or\\s+.*")
                 || sql.matches("(?i).*\\s+or\\s+1=1\\s*.*")
                 || sql.matches("(?i).*\\s+and\\s+1=1\\s*.*")
+                || sql.matches("(?i).*\\s+1=1\\s+and\\s*.*")
                 || sql.matches(".*\\(+\\s*1=1\\s*\\).*"))
             sql = replaceWhere(sql);
         return sql;
