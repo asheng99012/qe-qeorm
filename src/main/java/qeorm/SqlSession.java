@@ -173,7 +173,7 @@ public class SqlSession {
 
         }
         //如果开启事务，则停用从库
-        if (isTransaction() && dbName.endsWith(Slave))
+        if (isTransaction() && dbName.endsWith(Slave) && jdbcTemplate.containsKey(dbName.replace(Slave, Master)))
             dbName = dbName.replace(Slave, Master);
 
         if (!jdbcTemplate.containsKey(dbName)) {
