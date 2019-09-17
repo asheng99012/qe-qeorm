@@ -49,8 +49,9 @@ public class StringFormat {
         Matcher m = p.matcher(str);
         StringBuffer sb = new StringBuffer();
         while (m.find()) {
-            String ret=operator.exec(m);
-            ret=ret.replaceAll("\\\\","\\\\\\\\");
+            String ret = operator.exec(m);
+            if (ret == null) ret = "null";
+            ret = ret.replaceAll("\\\\", "\\\\\\\\").replaceAll("\\$","");
             m.appendReplacement(sb, ret);
 //            m.appendReplacement(sb, operator.exec(m));
         }

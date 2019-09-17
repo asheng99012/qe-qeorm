@@ -82,7 +82,7 @@ public class SqlResultExecutor {
         dealSqlIntercepts();
         if (!result.sqlConfig.isPrimitive())
             dealReturnType();
-        else
+        else if (result.getResult() != null)
             result.setResult(JsonUtils.convert(result.getResult(), result.getSqlConfig().getKlass()));
 
         return result;
