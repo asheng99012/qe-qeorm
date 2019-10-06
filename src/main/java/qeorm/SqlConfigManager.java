@@ -286,7 +286,7 @@ public class SqlConfigManager {
             sqlConfig = JsonUtils.convert(refMap, SqlConfig.class);
         }
         //如果ReturnType 不为空，则用TableStruct处理结果集
-        if (sqlConfig.getSql().matches(isSelectPattern) && sqlConfig.getReturnType() != null) {
+        if (sqlConfig.getSql() != null && sqlConfig.getSql().matches(isSelectPattern) && sqlConfig.getReturnType() != null) {
             sqlConfig.setFunIntercepts("all", TableStruct.instance);
         }
         /**
@@ -351,7 +351,8 @@ public class SqlConfigManager {
                 }
             }
         }
-        parseSql(sqlConfig);
+        if (sqlConfig.getSql() != null)
+            parseSql(sqlConfig);
 
         return sqlConfig;
     }
