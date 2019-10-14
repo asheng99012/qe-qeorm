@@ -33,6 +33,7 @@ public class SqlConfig {
     private String id;
     private String dbName;
     private String paramNode;
+    private String proxy;
     private boolean isCache = false;
     private boolean isTran = false;
     private String sql;
@@ -324,4 +325,11 @@ public class SqlConfig {
         return tableNameList;
     }
 
+    public String getProxy() {
+        return proxy;
+    }
+
+    public void setProxy(String proxy) {
+        this.proxy = proxy;
+    }
 }

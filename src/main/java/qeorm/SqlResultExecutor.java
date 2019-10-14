@@ -104,7 +104,7 @@ public class SqlResultExecutor {
         } else if (sqlType.equals(SqlConfig.INSERT)) {
             KeyHolder keyholder = new GeneratedKeyHolder();
             jdbc.update(sql, new MapSqlParameterSource(map), keyholder);
-            Object ret = keyholder.getKey().intValue();
+            Object ret = keyholder.getKey().longValue();
             CacheManager.instance.edit(result.getSqlConfig().getTableNameList());
             return (T) ret;
         } else if (result.sqlConfig.isPrimitive())
@@ -275,7 +275,7 @@ public class SqlResultExecutor {
         }
     }
 
-    private void dealFunIntercept(Object dataSet) {
+    public void dealFunIntercept(Object dataSet) {
         List<Pair<String, IFunIntercept>> list = result.getSqlConfig().getFunIntercepts();
         logger.info("有{}个funIntercept需要处理", list.size());
         logger.info("funIntercepts list :" + JsonUtils.toJson(list));
@@ -292,7 +292,7 @@ public class SqlResultExecutor {
         }
     }
 
-    private void dealSqlIntercepts() {
+    public void dealSqlIntercepts() {
         Map<String, Object> map = result.getParams();
         String key = "withRelation";
         if (!map.containsKey(key) || Boolean.valueOf(map.get("withRelation").toString())) {
@@ -346,7 +346,7 @@ public class SqlResultExecutor {
         }
     }
 
-    private void dealReturnType() {
+    public void dealReturnType() {
         logger.info("dealReturnType");
         if (!Strings.isNullOrEmpty(result.getSqlConfig().getReturnType()) && result.getSqlConfig().getSqlType().equals(SqlConfig.SELECT)) {
             Class clz = result.getSqlConfig().getKlass();

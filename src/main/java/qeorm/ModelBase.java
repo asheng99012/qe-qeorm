@@ -101,6 +101,13 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
         return Integer.parseInt(o.toString());
     }
 
+    public long insertLong() {
+        Object o = exec(SqlConfig.INSERT);
+        if (o == null)
+            return 0L;
+        return Long.parseLong(o.toString());
+    }
+
     public <T> List<T> selectWithrelation() {
         this.withRelation = true;
         Object o = exec(SqlConfig.SELECT);

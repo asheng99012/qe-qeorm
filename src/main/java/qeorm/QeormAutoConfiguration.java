@@ -13,6 +13,11 @@ import org.springframework.core.env.Environment;
 public class QeormAutoConfiguration {
 
     @Bean
+    public SpringUtils springUtils() {
+        return new SpringUtils();
+    }
+
+    @Bean
     @ConditionalOnProperty(prefix = "qeorm.mapper", name = "basePackage")
     public MapperScanner qeormMapperScanner() {
         return new MapperScanner();

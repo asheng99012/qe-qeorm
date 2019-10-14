@@ -1,6 +1,7 @@
 package qeorm;
 
 import com.alibaba.druid.pool.DruidAbstractDataSource;
+import com.google.common.base.Strings;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcDaoSupport;
 import qeorm.utils.JsonUtils;
 
@@ -111,17 +112,25 @@ public class SqlExecutor {
     }
 
     public static SqlResult exec(SqlConfig sqlConfig, Map<String, Object> map) {
+
+        return getExecutor(sqlConfig).init(sqlConfig, map).exec();
+    }
+
+    public static SqlResultExecutor getExecutor(SqlConfig sqlConfig) {
+        if (!Strings.isNullOrEmpty(sqlConfig.getProxy())) {
+            return new ProxyExecutor();
+        }
         NamedParameterJdbcDaoSupport jdbc = (NamedParameterJdbcDaoSupport) SqlSession.instance.getSupport(sqlConfig.getDbName());
         DruidAbstractDataSource dataSource = (DruidAbstractDataSource) jdbc.getDataSource();
         String url = dataSource.getUrl();
-        return getExecutor(url).init(sqlConfig, map).exec();
+        return getExecutor(url);
     }
 
     public static SqlResultExecutor getExecutor(String url) {
         String className = "qeorm.";
         if (url.indexOf("elasticsearch") > -1)
             className = className + "EsResultExecutor";
-        else if(url.indexOf("mongodb") > -1)
+        else if (url.indexOf("mongodb") > -1)
             className = className + "MongoDbExecutor";
         else
             className = className + "SqlResultExecutor";
