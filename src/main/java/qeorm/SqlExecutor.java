@@ -91,7 +91,7 @@ public class SqlExecutor {
         SqlResult sqlResult = exec(sqlConfig, map);
         if (sqlResult.isOk()) {
             Object val = sqlResult.getResult();
-            if (val instanceof List)
+            if (val instanceof List && ((List) val).size() > 0)
                 return (T) ((List) val).get(0);
             else return (T) val;
         }
