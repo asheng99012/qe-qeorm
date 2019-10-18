@@ -15,6 +15,7 @@ import org.springframework.cglib.beans.BeanMap;
 import org.springframework.core.NamedThreadLocal;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcDaoSupport;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.TransactionStatus;
@@ -103,7 +104,7 @@ public class SqlSession {
 
     //----------------
 
-    private static Map<String, QeNamedParameterJdbcDaoSupport> jdbcTemplate = new HashMap<String, QeNamedParameterJdbcDaoSupport>();
+    private static Map<String, NamedParameterJdbcDaoSupport> jdbcTemplate = new HashMap<String, NamedParameterJdbcDaoSupport>();
 
     //    @Value("${qeorm.defaultDataSource}")
     private String defaultDataSource;
@@ -156,12 +157,12 @@ public class SqlSession {
 
     public NamedParameterJdbcOperations getJdbcTemplate(String _dbName) {
 
-        QeNamedParameterJdbcDaoSupport jdbc = getSupport(_dbName);
+        NamedParameterJdbcDaoSupport jdbc = getSupport(_dbName);
 
         return jdbc.getNamedParameterJdbcTemplate();
     }
 
-    public QeNamedParameterJdbcDaoSupport getSupport(String _dbName) {
+    public NamedParameterJdbcDaoSupport getSupport(String _dbName) {
         String dbName = _dbName;
         if (Strings.isNullOrEmpty(_dbName)) dbName = defaultDataSource + Master;
         if (!jdbcTemplate.containsKey(dbName)) {
@@ -181,7 +182,7 @@ public class SqlSession {
             throw new DataSourceNotExistException("数据源" + dbName + "不存在");
         }
         logger.info("使用的数据源是{}", dbName);
-        QeNamedParameterJdbcDaoSupport jdbc = jdbcTemplate.get(dbName);
+        NamedParameterJdbcDaoSupport jdbc = jdbcTemplate.get(dbName);
         setTransaction(dbName, jdbc.getDataSource());
         return jdbc;
     }
