@@ -32,7 +32,7 @@ public class SqlConfigManager {
 
     private static int dsIdenty = 3;
 
-    public static String sqlSelectPattern = "(\\s+|,)(?i)([`\\.'a-zA-Z\\d_]+){1}\\s*(!=|>=|=<|=>|<=|<|>|=|\\s+like\\s+|\\s+in\\s+|\\s+not\\s+in\\s+|\\s+by\\s+){1}\\s*([\\(%'`\\.'a-zA-Z\\d_\\+\\-\\s]+){0,1}\\s*(\\{\\s*([a-zA-Z\\d_]+)\\s*\\}){1}(\\s*[\\)%']+){0,1}";
+    public static String sqlSelectPattern = "([^\\w]+)(?i)([`\\.'a-zA-Z\\d_]+){1}\\s*(!=|>=|=<|=>|<=|<|>|=|\\s+like\\s+|\\s+in\\s+|\\s+not\\s+in\\s+|\\s+by\\s+){1}\\s*([\\(%'`\\.'a-zA-Z\\d_\\+\\-\\s]+){0,1}\\s*(\\{\\s*([a-zA-Z\\d_]+)\\s*\\}){1}(\\s*[\\)%']+){0,1}";
     public static String sqlInsertPattern = "\\{([a-zA-Z\\d_]+)+\\}";
     public static String sqlAndOrPattern = "\\s+(?i)([`\\.'a-zA-Z\\d_]+){1}\\s*(&|\\|){1}\\s*(\\{\\s*([a-zA-Z\\d_]+)\\s*\\}){1}\\s*=\\s*(\\{\\s*([a-zA-Z\\d_]+)\\s*\\}){1}";
     public static String sqlTablePattern = "\\s+(?i)(from|join|into|update)\\s+([`\\.a-zA-Z\\d_]+){1}";
