@@ -80,7 +80,7 @@ public class SqlResultExecutor {
                 oParams.remove("pn");
         }
         dealSqlIntercepts();
-        if (!result.sqlConfig.isPrimitive())
+        if (result.getResult() != null && !result.sqlConfig.isPrimitive())
             dealReturnType();
         else if (result.getResult() != null)
             result.setResult(JsonUtils.convert(result.getResult(), result.getSqlConfig().getKlass()));

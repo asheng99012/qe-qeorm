@@ -73,8 +73,10 @@ public class SqlConfigManager {
             sqlType = SqlConfig.COUNT;
         } else if (sql.matches(SqlConfigManager.isSelectPattern)) {
             sqlType = SqlConfig.SELECT;
-        } else if (sql.matches(SqlConfigManager.isUpdatePattern) || sql.matches(SqlConfigManager.isDeletePattern)) {
+        } else if (sql.matches(SqlConfigManager.isUpdatePattern)) {
             sqlType = SqlConfig.UPDATE;
+        } else if (sql.matches(SqlConfigManager.isDeletePattern)) {
+            sqlType = SqlConfig.DELETE;
         } else if (sql.matches(SqlConfigManager.isInsertPattern)) {
             sqlType = SqlConfig.INSERT;
         } else {
