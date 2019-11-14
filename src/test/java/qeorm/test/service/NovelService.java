@@ -19,6 +19,8 @@ public class NovelService {
 
         Novel novel = new Novel();
         novel.setTagId(23);
+//        novel.notIgnoreNull();
+        novel.insert();
         novel = novel.enhance();
         novel.getTagInfo();
 

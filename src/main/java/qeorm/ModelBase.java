@@ -49,7 +49,18 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
     private Boolean withRelation;
 
     @Transient
+    private Boolean _ignoreNull = true;
+
+    @Transient
     private Set<String> nullSet;
+
+    public void ignoreNull() {
+        _ignoreNull = true;
+    }
+
+    public void notIgnoreNull() {
+        _ignoreNull = false;
+    }
 
     public Boolean isWithRelation() {
         return withRelation;
@@ -179,7 +190,9 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
         // if (sqlIndex.equals(SqlConfig.SELECT) ||
         // sqlIndex.equals(SqlConfig.COUNT))
         // this.interceptSelect();
-        Map<String, Object> params = JsonUtils.convert(this, Map.class);
+        Map<String, Object> params;
+        if (_ignoreNull) params = JsonUtils.convert(this, Map.class);
+        else params = JsonUtils.convert(JsonUtils.toJsonWriteNull(this), Map.class);
         for (String str : nullSet) {
             params.put(str, null);
         }

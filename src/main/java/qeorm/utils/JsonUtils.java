@@ -34,4 +34,9 @@ public class JsonUtils {
         return JSON.toJSONString(object, SerializerFeature.WriteDateUseDateFormat);
     }
 
+    public static String toJsonWriteNull(Object object) {
+        if (object == null) return "null";
+        if (object instanceof String) return String.valueOf(object);
+        return JSON.toJSONString(object, SerializerFeature.WriteDateUseDateFormat, SerializerFeature.WriteMapNullValue);
+    }
 }
