@@ -17,6 +17,7 @@ import qeorm.intercept.IFunIntercept;
 import qeorm.intercept.ObjectToJsonString;
 import qeorm.utils.ExtendUtils;
 import qeorm.utils.JsonUtils;
+import qeorm.utils.Wrap;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -369,9 +370,10 @@ public class SqlResultExecutor {
         List<Object> params = Lists.newArrayList();
         Map<Object, Boolean> hash = Maps.newHashMap();
         for (Map<String, Object> map : list) {
-            if (!hash.containsKey(map.get(key))) {
-                params.add(map.get(key));
-                hash.put(map.get(key), true);
+            Object val = Wrap.getWrap(map).getValue(key);
+            if (!hash.containsKey(val)) {
+                params.add(val);
+                hash.put(val, true);
             }
         }
 

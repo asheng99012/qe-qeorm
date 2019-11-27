@@ -63,9 +63,9 @@ public class ProxyExecutor extends SqlResultExecutor {
         String proxy = getResult().getSqlConfig().getProxy();
         try {
             Object ret = run(proxy, map);
-            if (ret instanceof List) {
-                ret = JSON.toJSON(ret);
-            }
+//            if (ret instanceof List) {
+//                ret = JSON.toJSON(ret);
+//            }
             return (T) ret;
         } catch (Exception e) {
             e.printStackTrace();
