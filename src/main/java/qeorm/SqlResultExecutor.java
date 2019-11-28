@@ -37,6 +37,7 @@ public class SqlResultExecutor {
 
     private Logger logger = LoggerFactory.getLogger(SqlResultExecutor.class);
     SqlResult result;
+    QePage qePage;
     Map<String, Object> oParams;
 
 
@@ -48,6 +49,7 @@ public class SqlResultExecutor {
     }
 
     public SqlResultExecutor init(SqlConfig sqlConfig, Map<String, Object> map) {
+        qePage = new QePage();
         oParams = cloneMap(map);
         result = new SqlResult();
         result.setSqlConfig(sqlConfig);
@@ -85,7 +87,7 @@ public class SqlResultExecutor {
             dealReturnType();
         else if (result.getResult() != null)
             result.setResult(JsonUtils.convert(result.getResult(), result.getSqlConfig().getKlass()));
-
+        dealQePage();
         return result;
     }
 
@@ -97,7 +99,7 @@ public class SqlResultExecutor {
         if (sqlType.equals(SqlConfig.CURSOR)) {
             return (T) jdbc.query(sql, map, new RowCallbackHandlerResultSetExtractor(result.getSqlConfig().getRowCallbacks(), result));
         } else if (sqlType.equals(SqlConfig.COUNT)) {
-            return (T) jdbc.queryForObject(sql, map, Integer.class);
+            return (T) jdbc.queryForObject(sql, map, Long.class);
         } else if (sqlType.equals(SqlConfig.UPDATE) || sqlType.equals(SqlConfig.DELETE)) {
             Object ret = jdbc.update(sql, map);
             CacheManager.instance.edit(result.getSqlConfig().getTableNameList());
@@ -114,6 +116,20 @@ public class SqlResultExecutor {
             return (T) jdbc.queryForList(sql, map);
         } else {
             return (T) jdbc.queryForList(sql, map);
+        }
+    }
+
+    public void dealQePage() {
+        Object ret = result.getResult();
+        if (ret instanceof List) {
+
+            if (qePage.isCount()) {
+                NamedParameterJdbcOperations jdbc = sqlSession.getJdbcTemplate(this.result.sqlConfig.getDbName());
+                qePage.setTotal(jdbc.queryForObject(qePage.getCountSql(), result.getParams(), Long.class));
+            }
+
+            qePage.addAll((List) ret);
+            result.setResult(qePage);
         }
     }
 
@@ -193,12 +209,6 @@ public class SqlResultExecutor {
         }
 
 
-        if (result.getSqlConfig().getSqlType().equals(SqlConfig.SELECT) && map.containsKey("ps") && map.containsKey("pn") && map.get("ps") != null && map.get("pn") != null) {
-            int pn = Integer.valueOf(map.get("pn").toString());
-            int ps = Integer.valueOf(map.get("ps").toString());
-            int start = ps * (pn - 1);
-            sql = sql + " limit " + start + " , " + ps;
-        }
         sql = replaceWhere(sql);
 
 //        sql = sql.replaceAll("(?i)1=1\\s*or\\s+", " ");
@@ -219,6 +229,17 @@ public class SqlResultExecutor {
         if ((type.equals(SqlConfig.UPDATE) || type.equals(SqlConfig.DELETE))
                 && sql.toLowerCase().endsWith("where 1=1 ")) {
             throw new SqlErrorException("更新语句缺少条件，会造成全表跟新：" + sql);
+        }
+        if (result.getSqlConfig().getSqlType().equals(SqlConfig.SELECT) && map.containsKey("ps") && map.containsKey("pn") && map.get("ps") != null && map.get("pn") != null) {
+
+            int pn = Integer.valueOf(map.get("pn").toString());
+            int ps = Integer.valueOf(map.get("ps").toString());
+            int start = ps * (pn - 1);
+
+            boolean needCount = map.containsKey("needCount") && Boolean.parseBoolean(map.get("needCount").toString());
+            qePage = new QePage(pn, ps, needCount, sql);
+
+            sql = sql + " limit " + start + " , " + ps;
         }
         result.setSql(sql);
     }

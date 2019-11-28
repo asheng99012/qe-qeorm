@@ -46,6 +46,9 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
     private Integer ps;
 
     @Transient
+    private Boolean needCount;
+
+    @Transient
     private Boolean withRelation;
 
     @Transient
@@ -94,6 +97,14 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
 
     public void setPs(Integer ps) {
         this.ps = ps;
+    }
+
+    public Boolean getNeedCount() {
+        return needCount;
+    }
+
+    public void setNeedCount(Boolean needCount) {
+        this.needCount = needCount;
     }
 
     public int save() {
@@ -219,7 +230,7 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
     }
 
     protected boolean primaryKeyIntoDb() {
-        return true;
+        return false;
     }
 
     protected SqlConfig createSqlConfig(String type) {
