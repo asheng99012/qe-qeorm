@@ -25,7 +25,7 @@ public class QePage<E> extends ArrayList<E> {
     /**
      * 总数
      */
-    private long total;
+    private Long total;
     /**
      * 总页数
      */
@@ -77,11 +77,12 @@ public class QePage<E> extends ArrayList<E> {
     }
 
 
-    public long getTotal() {
+    public Long getTotal() {
         return total;
     }
 
-    public void setTotal(long total) {
+    public void setTotal(Long total) {
+        if (total == null) total = 0l;
         this.total = total;
         if (total == -1) {
             pages = 1;

@@ -93,7 +93,8 @@ public class SqlExecutor {
             Object val = sqlResult.getResult();
             if (val instanceof List && ((List) val).size() > 0)
                 return (T) ((List) val).get(0);
-            else return (T) JsonUtils.convert(val, returnType);
+            else if (val != null)
+                return (T) JsonUtils.convert(val, returnType);
         }
         return null;
     }
@@ -112,7 +113,6 @@ public class SqlExecutor {
     }
 
     public static SqlResult exec(SqlConfig sqlConfig, Map<String, Object> map) {
-
         return getExecutor(sqlConfig).init(sqlConfig, map).exec();
     }
 

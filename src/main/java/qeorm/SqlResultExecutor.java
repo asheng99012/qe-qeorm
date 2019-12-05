@@ -121,8 +121,11 @@ public class SqlResultExecutor {
 
     public void dealQePage() {
         Object ret = result.getResult();
-        if (ret instanceof List) {
-
+        if (ret instanceof QePage) {
+            qePage.setTotal(((QePage) ret).getTotal());
+            qePage.addAll((List) ret);
+            result.setResult(qePage);
+        } else if (ret instanceof List) {
             if (qePage.isCount()) {
                 NamedParameterJdbcOperations jdbc = sqlSession.getJdbcTemplate(this.result.sqlConfig.getDbName());
                 qePage.setTotal(jdbc.queryForObject(qePage.getCountSql(), result.getParams(), Long.class));
@@ -372,12 +375,13 @@ public class SqlResultExecutor {
         logger.info("dealReturnType");
         if (!Strings.isNullOrEmpty(result.getSqlConfig().getReturnType()) && result.getSqlConfig().getSqlType().equals(SqlConfig.SELECT)) {
             Class clz = result.getSqlConfig().getKlass();
-            List<Map> datas = (List<Map>) result.getResult();
-            List list = new ArrayList();
-            for (Map map : datas) {
-                list.add(JsonUtils.convert(map, clz));
+            List datas = (List<Map>) result.getResult();
+            if (datas != null && datas.size() > 0) {
+                for (int i = 0; i < datas.size(); i++) {
+                    datas.set(i, JsonUtils.convert(datas.get(i), clz));
+                }
             }
-            result.setResult(list);
+            result.setResult(datas);
         }
     }
 
