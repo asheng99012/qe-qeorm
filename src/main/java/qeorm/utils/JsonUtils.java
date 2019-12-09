@@ -31,12 +31,12 @@ public class JsonUtils {
     public static String toJson(Object object) {
         if (object == null) return "null";
         if (object instanceof String) return String.valueOf(object);
-        return JSON.toJSONString(object, SerializerFeature.WriteDateUseDateFormat);
+        return JSON.toJSONString(object, SerializerFeature.UseISO8601DateFormat);
     }
 
     public static String toJsonWriteNull(Object object) {
         if (object == null) return "null";
         if (object instanceof String) return String.valueOf(object);
-        return JSON.toJSONString(object, SerializerFeature.WriteDateUseDateFormat, SerializerFeature.WriteMapNullValue);
+        return JSON.toJSONString(object, SerializerFeature.UseISO8601DateFormat, SerializerFeature.WriteMapNullValue);
     }
 }

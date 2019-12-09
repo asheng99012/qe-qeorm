@@ -104,6 +104,7 @@ public class TableStruct implements IFunIntercept {
                 TableColumn tableColumn = new TableColumn();
                 tableColumn.setClumnName(columnName);
                 tableColumn.setFiledName(field[i].getName());
+                tableColumn.setType(field[i].getType());
                 tableColumnList.add(tableColumn);
                 if (!tableColumn.getClumnName().equals(tableColumn.getFiledName())) isMapped = true;
             }
