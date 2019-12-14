@@ -5,6 +5,7 @@ import qeorm.test.model.Tag;
 import qeorm.utils.JsonUtils;
 
 import java.util.Date;
+import java.util.Map;
 
 public class RegTest {
     @Test
@@ -43,6 +44,7 @@ public class RegTest {
     @Test
     public void testJson() {
         Tag ret = JsonUtils.convert("{\"add_time\":\"2019-12-09T13:03:57\",\"ps\":50}", Tag.class);
+        Map map = JsonUtils.convert(ret, Map.class);
         System.out.println(JsonUtils.toJson(ret));
     }
 }
