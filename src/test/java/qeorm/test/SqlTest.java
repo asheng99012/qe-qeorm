@@ -50,7 +50,7 @@ public class SqlTest {
 
     @Test
     public void testKK() {
-        String sql = " select id, rule_id, rule_name, regist_start_date, regist_end_date, effective_start_date, effective_end_date, create_at, update_at, status, create_user, update_user, remark, create_user_name, update_user_name, own_month from `rule_conf`\n" +
+        String sql = " select id, rule_id, rule_name, regist_start_date, regist_end_date, effective_start_date, effective_end_date, create_at, update_at, status, create_user, update_user, remark, create_user_name, update_user_name, own_month from {tableName}\n" +
                 "     where\n" +
                 "     (\nregist_start_date <= {registStartDate} and a=dd(23,34) and regist_end_date >= {registStartDate} )\n" +
                 "      or (regist_start_date <= {registEndDate} and regist_end_date >= {registEndDate})";
@@ -59,12 +59,12 @@ public class SqlTest {
         SqlConfigManager.parseSql(sqlConfig);
 
 
-        sql = "update rule_conf set a={a},b={b} where c={c}";
+        sql = "update {tableName} set a={a},b={b} where c={c}";
         sqlConfig = new SqlConfig();
         sqlConfig.setSql(sql);
         SqlConfigManager.parseSql(sqlConfig);
 
-        sql = "select * from user u where u.id={id}";
+        sql = "select * from {tableName} u where u.id={id}";
         sqlConfig = new SqlConfig();
         sqlConfig.setSql(sql);
         SqlConfigManager.parseSql(sqlConfig);

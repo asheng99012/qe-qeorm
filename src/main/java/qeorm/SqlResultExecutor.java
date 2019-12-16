@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
 
 /**
  * Created by ashen on 2017-2-4.
@@ -244,6 +245,17 @@ public class SqlResultExecutor {
 
             sql = sql + " limit " + start + " , " + ps;
         }
+        sql = StringFormat.format(sql, new AbstractRegexOperator() {
+            @Override
+            public String getPattern() {
+                return "\\{([^\\}]+)\\}";
+            }
+
+            @Override
+            public String exec(Matcher m) {
+                return (String) map.get(m.group(1));
+            }
+        });
         result.setSql(sql);
     }
 
