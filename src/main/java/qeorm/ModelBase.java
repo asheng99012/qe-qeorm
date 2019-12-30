@@ -213,6 +213,31 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
         return null;
     }
 
+
+    public Map fetchRealVal() {
+        Set json = new HashSet();
+        json.add("pn");
+        json.add("ps");
+        json.add("_ignoreNull");
+        json.add("withRelation");
+        json.add("nullSet");
+        json.add("needCount");
+
+
+        Map<String, Object> params = BeanMap.create(this);
+        TableStruct table = TableStruct.getTableStruct(this.getClass().getName());
+        Map data = new HashMap();
+        if (table != null && table.isMapped()) {
+            for (TableColumn tc : table.getTableColumnList()) {
+                String key = tc.getFiledName();
+                if (!json.contains(key) && params.get(key) != null) {
+                    data.put(tc.getClumnName(), params.get(key));
+                }
+            }
+        }
+        return data;
+    }
+
     public void interceptInsert(SqlConfig sqlConfig) {
 
     }

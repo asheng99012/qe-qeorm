@@ -176,9 +176,13 @@ public class SqlConfigProxy<T> implements MethodInterceptor, FactoryBean<T> {
             for (SqlConfig sc : sqlConfig.getSqlIntercepts()) {
                 completeSqlIntercepts(sc);
                 if (!Strings.isNullOrEmpty(sc.getReturnType()) || Strings.isNullOrEmpty(sc.getFillKey())) continue;
-                Field field = klazz.getDeclaredField(sc.getFillKey());
-                Class klass = MethodTruct.getRealClass(field.getGenericType());
-
+                Class klass;
+                if (klazz.getName().equals("java.util.Map") || klazz.getName().equals("java.util.List")) {
+                    klass = Map.class;
+                } else {
+                    Field field = klazz.getDeclaredField(sc.getFillKey());
+                    klass = MethodTruct.getRealClass(field.getGenericType());
+                }
                 if (klass != null) {
                     sc.setReturnType(klass.getName());
 

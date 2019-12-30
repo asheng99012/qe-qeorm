@@ -229,6 +229,7 @@ public class SqlResultExecutor {
         sql = sql.replaceAll("\\s+\\(\\s+\\)", "()");
         sql = sql.replaceAll("\\(\\s+", "(");
         sql = sql.replaceAll("\\s+\\)", ")");
+        sql = sql.replaceAll("(?i)\\s+where\\s+1=1\\s+", " ");
         String type = result.getSqlConfig().getSqlType();
         if ((type.equals(SqlConfig.UPDATE) || type.equals(SqlConfig.DELETE))
                 && sql.toLowerCase().endsWith("where 1=1 ")) {
@@ -253,7 +254,7 @@ public class SqlResultExecutor {
 
             @Override
             public String exec(Matcher m) {
-                return (String) map.get(m.group(1));
+                return map.get(m.group(1)).toString();
             }
         });
         result.setSql(sql);
@@ -268,13 +269,13 @@ public class SqlResultExecutor {
         sql = sql.replaceAll("(?i)\\s+and\\s+1=1\\s*", " ");
         sql = sql.replaceAll("(?i)\\s+1=1\\s+and\\s*", " ");
         sql = sql.replaceAll("\\(+\\s*1=1\\s*\\)", " 1=1 ");
-        if (sql.matches(".*,\\s*1=1\\s*.*")
-                || sql.matches(".*1=1\\s*,.*")
-                || sql.matches("(?i).*1=1\\s+or\\s+.*")
-                || sql.matches("(?i).*\\s+or\\s+1=1\\s*.*")
-                || sql.matches("(?i).*\\s+and\\s+1=1\\s*.*")
-                || sql.matches("(?i).*\\s+1=1\\s+and\\s*.*")
-                || sql.matches(".*\\(+\\s*1=1\\s*\\).*"))
+        if (sql.matches("([\\s\\S]*),\\s*1=1\\s*([\\s\\S]*)")
+                || sql.matches("([\\s\\S]*)1=1\\s*,([\\s\\S]*)")
+                || sql.matches("(?i)([\\s\\S]*)1=1\\s+or\\s+([\\s\\S]*)")
+                || sql.matches("(?i)([\\s\\S]*)\\s+or\\s+1=1\\s*([\\s\\S]*)")
+                || sql.matches("(?i)([\\s\\S]*)\\s+and\\s+1=1\\s*([\\s\\S]*)")
+                || sql.matches("(?i)([\\s\\S]*)\\s+1=1\\s+and\\s*([\\s\\S]*)")
+                || sql.matches("([\\s\\S]*)\\(+\\s*1=1\\s*\\)([\\s\\S]*)"))
             sql = replaceWhere(sql);
         return sql;
     }
