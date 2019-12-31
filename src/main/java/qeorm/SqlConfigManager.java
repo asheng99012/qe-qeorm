@@ -266,7 +266,7 @@ public class SqlConfigManager {
      * @return
      * @throws Exception
      */
-    private static SqlConfig createSqlConfig(Node element, Map<String, String> parentAttrs) throws Exception {
+    public static SqlConfig createSqlConfig(Node element, Map<String, String> parentAttrs) throws Exception {
         Map<String, String> map = new HashMap<String, String>();
         map.putAll(parentAttrs);
         map.putAll(getAttributes(element));

@@ -2,6 +2,7 @@ package qeorm;
 
 import com.alibaba.druid.pool.DruidAbstractDataSource;
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcDaoSupport;
 import qeorm.utils.JsonUtils;
 
@@ -141,5 +142,24 @@ public class SqlExecutor {
         }
     }
 
+
+    public static int insert(String dbName, String tableName, Map data) {
+        return batchInsert(dbName, tableName, Lists.newArrayList(data));
+    }
+
+    public static int batchInsert(String dbName, String tableName, List<Map> dataList) {
+        NamedParameterJdbcDaoSupport jdbc = (NamedParameterJdbcDaoSupport) SqlSession.instance.getSupport(dbName);
+        DruidAbstractDataSource dataSource = (DruidAbstractDataSource) jdbc.getDataSource();
+        String url = dataSource.getUrl();
+        return getExecutor(url).batchInsert(dbName, tableName, dataList);
+    }
+
+    public static int batchInsertModel(String dbName, String tableName, List<? extends ModelBase> dataList) {
+        List<Map> list = new ArrayList<>();
+        dataList.forEach(model -> {
+            list.add(model.fetchRealVal());
+        });
+        return batchInsert(dbName, tableName, list);
+    }
 }
 

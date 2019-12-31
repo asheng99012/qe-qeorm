@@ -418,5 +418,17 @@ public class SqlResultExecutor {
         return params;
     }
 
+    public int insert(String dbName, String tableName, Map data) {
+        return batchInsert(dbName, tableName, Lists.newArrayList(data));
+    }
+
+    public int batchInsert(String dbName, String tableName, List<Map> dataList) {
+        Map data = dataList.get(0);
+        List<String> columns = new ArrayList<String>(data.keySet());
+        String sql = "insert into `" + tableName + "` (`" + Joiner.on("`,`").join(columns) + "`) values (:" + Joiner.on(",:").join(columns) + ")";
+        NamedParameterJdbcOperations jdbc = SqlSession.instance.getJdbcTemplate(dbName);
+        int[] ints = jdbc.batchUpdate(sql, dataList.toArray(new Map[dataList.size() - 1]));
+        return ints.length;
+    }
 
 }
