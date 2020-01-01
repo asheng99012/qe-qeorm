@@ -67,11 +67,11 @@ public class TableStruct implements IFunIntercept {
             table = (Table) klazz.getSuperclass().getAnnotation(Table.class);
         }
         if (table != null) {
-            primaryKey = table.primaryKey();
-            tableName = table.tableName();
+            primaryKey = StringFormat.format(table.primaryKey());
+            tableName = StringFormat.format(table.tableName());
             where = table.where();
-            slaveDbName = table.slaveDbName();
-            masterDbName = table.masterDbName();
+            slaveDbName = StringFormat.format(table.slaveDbName());
+            masterDbName = StringFormat.format(table.masterDbName());
         }
 
         isMapped = false;

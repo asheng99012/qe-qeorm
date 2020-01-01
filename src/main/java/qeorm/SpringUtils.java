@@ -3,6 +3,7 @@ package qeorm;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.core.env.Environment;
 
 public class SpringUtils implements ApplicationContextAware {
     private static ApplicationContext appContext = null;
@@ -32,6 +33,10 @@ public class SpringUtils implements ApplicationContextAware {
     //通过name,以及Clazz返回指定的Bean
     public static <T> T getBean(String name, Class<T> clazz) {
         return getApplicationContext().getBean(name, clazz);
+    }
+
+    public static String getProperty(String key) {
+        return getBean(Environment.class).getProperty(key);
     }
 
 }

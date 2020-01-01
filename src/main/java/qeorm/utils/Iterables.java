@@ -1,4 +1,4 @@
-package com.dankegongyu.app.common;
+package qeorm.utils;
 
 import com.google.common.collect.AbstractIterator;
 import org.springframework.cglib.beans.BeanMap;
