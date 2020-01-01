@@ -107,22 +107,41 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
         this.needCount = needCount;
     }
 
-    public int save() {
-        TableStruct table = TableStruct.getTableStruct(this.getClass().getName());
-        String key = table.getPrimaryField();
-        Map map = JsonUtils.convert(this, Map.class);
-        if (map.containsKey(key))
-            return update();
-        return insert();
-    }
 
     public int insert() {
+        return SqlExecutor.insert(this);
+    }
+
+    public int update() {
+        return SqlExecutor.update(this);
+    }
+
+    public int save() {
+        return SqlExecutor.save(this);
+    }
+
+    public int insert2() {
         Object o = exec(SqlConfig.INSERT);
         if (o == null)
             return 0;
         return Integer.parseInt(o.toString());
     }
 
+    public int update2() {
+        Object o = exec(SqlConfig.UPDATE);
+        if (o == null)
+            return 0;
+        return Integer.parseInt(o.toString());
+    }
+
+    public int save2() {
+        TableStruct table = TableStruct.getTableStruct(this.getClass().getName());
+        String key = table.getPrimaryField();
+        Map map = JsonUtils.convert(this, Map.class);
+        if (map.containsKey(key))
+            return update2();
+        return insert2();
+    }
     public long insertLong() {
         Object o = exec(SqlConfig.INSERT);
         if (o == null)
@@ -178,13 +197,6 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
         return list.get(0);
     }
 
-    public int update() {
-        Object o = exec(SqlConfig.UPDATE);
-        if (o == null)
-            return 0;
-        return Integer.parseInt(o.toString());
-    }
-
     public int delete() {
         Object o = exec(SqlConfig.DELETE);
         if (o == null)
@@ -230,7 +242,7 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
         if (table != null && table.isMapped()) {
             for (TableColumn tc : table.getTableColumnList()) {
                 String key = tc.getFiledName();
-                if (!json.contains(key) && params.get(key) != null) {
+                if (!json.contains(key) && (params.get(key) != null || nullSet.contains(key))) {
                     data.put(tc.getClumnName(), params.get(key));
                 }
             }

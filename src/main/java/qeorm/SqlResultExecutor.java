@@ -9,6 +9,7 @@ import com.google.common.collect.Maps;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cglib.beans.BeanMap;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -108,9 +109,14 @@ public class SqlResultExecutor {
         } else if (sqlType.equals(SqlConfig.INSERT)) {
             KeyHolder keyholder = new GeneratedKeyHolder();
             jdbc.update(sql, new MapSqlParameterSource(map), keyholder);
-            Object ret = keyholder.getKey().longValue();
-            CacheManager.instance.edit(result.getSqlConfig().getTableNameList());
-            return (T) ret;
+            if (keyholder != null && keyholder.getKey() != null) {
+                Object ret = keyholder.getKey().longValue();
+                CacheManager.instance.edit(result.getSqlConfig().getTableNameList());
+                return (T) ret;
+            } else {
+                return null;
+            }
+
         } else if (result.sqlConfig.isPrimitive())
             return (T) jdbc.queryForObject(sql, map, result.getSqlConfig().getKlass());
         else if (sqlType.equals(SqlConfig.SELECT)) {
@@ -418,17 +424,52 @@ public class SqlResultExecutor {
         return params;
     }
 
-    public int insert(String dbName, String tableName, Map data) {
-        return batchInsert(dbName, tableName, Lists.newArrayList(data));
+    public int insert(String dbName, String tableName, String primaryKeyName, Map data) {
+        return batchInsert(dbName, tableName, primaryKeyName, Lists.newArrayList(data));
     }
 
-    public int batchInsert(String dbName, String tableName, List<Map> dataList) {
+    public int batchInsert(String dbName, String tableName, String primaryKeyName, List<Map> dataList) {
         Map data = dataList.get(0);
         List<String> columns = new ArrayList<String>(data.keySet());
         String sql = "insert into `" + tableName + "` (`" + Joiner.on("`,`").join(columns) + "`) values (:" + Joiner.on(",:").join(columns) + ")";
         NamedParameterJdbcOperations jdbc = SqlSession.instance.getJdbcTemplate(dbName);
+        dataList.forEach(map -> {
+            columns.forEach(key -> {
+                if (!map.containsKey(key)) map.put(key, null);
+            });
+        });
         int[] ints = jdbc.batchUpdate(sql, dataList.toArray(new Map[dataList.size() - 1]));
         return ints.length;
+    }
+
+    public <T extends ModelBase> int insert(T model) {
+        return model.insert2();
+    }
+
+    public <T extends ModelBase> int update(T model) {
+        return model.update2();
+    }
+
+    public <T extends ModelBase> int save(T model) {
+        TableStruct table = TableStruct.getTableStruct(model.getClass().getName());
+        BeanMap thisMap = BeanMap.create(model);
+        if (thisMap.get(table.getPrimaryField()) != null) {
+            try {
+                ModelBase clone = model.getClass().newInstance();
+                BeanMap beanMap = BeanMap.create(clone);
+                beanMap.put(table.getPrimaryField(), thisMap.get(table.getPrimaryField()));
+                int count = clone.count();
+                if (count > 0) {
+                    return update(model);
+                } else {
+                    return insert(model);
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e.getMessage(), e.getCause());
+            }
+        } else {
+            return insert(model);
+        }
     }
 
 }

@@ -127,6 +127,13 @@ public class SqlExecutor {
         return getExecutor(url);
     }
 
+    public static SqlResultExecutor getExecutorByDbname(String dbName) {
+        NamedParameterJdbcDaoSupport jdbc = (NamedParameterJdbcDaoSupport) SqlSession.instance.getSupport(dbName);
+        DruidAbstractDataSource dataSource = (DruidAbstractDataSource) jdbc.getDataSource();
+        String url = dataSource.getUrl();
+        return getExecutor(url);
+    }
+
     public static SqlResultExecutor getExecutor(String url) {
         String className = "qeorm.";
         if (url.indexOf("elasticsearch") > -1)
@@ -142,24 +149,44 @@ public class SqlExecutor {
         }
     }
 
+    public static <T extends ModelBase> int insert(T model) {
+        TableStruct tableStruct = TableStruct.getTableStruct(model.getClass().getName());
+        return getExecutorByDbname(tableStruct.getMasterDbName()).insert(model);
+    }
+
+    public static <T extends ModelBase> int update(T model) {
+        TableStruct tableStruct = TableStruct.getTableStruct(model.getClass().getName());
+        return getExecutorByDbname(tableStruct.getMasterDbName()).update(model);
+    }
+
+    public static <T extends ModelBase> int save(T model) {
+        TableStruct tableStruct = TableStruct.getTableStruct(model.getClass().getName());
+        return getExecutorByDbname(tableStruct.getMasterDbName()).save(model);
+    }
 
     public static int insert(String dbName, String tableName, Map data) {
-        return batchInsert(dbName, tableName, Lists.newArrayList(data));
+        return batchInsert(dbName, tableName, null, Lists.newArrayList(data));
+    }
+
+    public static int insert(String dbName, String tableName, String primaryKeyName, Map data) {
+        return batchInsert(dbName, tableName, primaryKeyName, Lists.newArrayList(data));
     }
 
     public static int batchInsert(String dbName, String tableName, List<Map> dataList) {
-        NamedParameterJdbcDaoSupport jdbc = (NamedParameterJdbcDaoSupport) SqlSession.instance.getSupport(dbName);
-        DruidAbstractDataSource dataSource = (DruidAbstractDataSource) jdbc.getDataSource();
-        String url = dataSource.getUrl();
-        return getExecutor(url).batchInsert(dbName, tableName, dataList);
+        return getExecutorByDbname(dbName).batchInsert(dbName, tableName, null, dataList);
+    }
+
+    public static int batchInsert(String dbName, String tableName, String primaryKeyName, List<Map> dataList) {
+        return getExecutorByDbname(dbName).batchInsert(dbName, tableName, primaryKeyName, dataList);
     }
 
     public static int batchInsertModel(String dbName, String tableName, List<? extends ModelBase> dataList) {
         List<Map> list = new ArrayList<>();
+        TableStruct tableStruct = TableStruct.getTableStruct(dataList.get(0).getClass().getName());
         dataList.forEach(model -> {
             list.add(model.fetchRealVal());
         });
-        return batchInsert(dbName, tableName, list);
+        return batchInsert(dbName, tableName, tableStruct.getPrimaryKey(), list);
     }
 }
 
