@@ -35,7 +35,19 @@ public class Iterables {
             @Override
             public List<T> dealList(List<T> list) {
                 if (list != null && !list.isEmpty())
-                    params.put("mixid", JsonUtils.convert(list.get(list.size() - 1), Map.class).get("id"));
+                    params.put("minid", JsonUtils.convert(list.get(list.size() - 1), Map.class).get("id"));
+                return list;
+            }
+        };
+    }
+
+    public static <T> Split<T> maxid(Object params) {
+        return new Split<T>(params) {
+
+            @Override
+            public List<T> dealList(List<T> list) {
+                if (list != null && !list.isEmpty())
+                    params.put("maxid", JsonUtils.convert(list.get(list.size() - 1), Map.class).get("id"));
                 return list;
             }
         };

@@ -142,6 +142,7 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
             return update2();
         return insert2();
     }
+
     public long insertLong() {
         Object o = exec(SqlConfig.INSERT);
         if (o == null)
@@ -239,7 +240,7 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
         Map<String, Object> params = BeanMap.create(this);
         TableStruct table = TableStruct.getTableStruct(this.getClass().getName());
         Map data = new HashMap();
-        if (table != null && table.isMapped()) {
+        if (table != null) {
             for (TableColumn tc : table.getTableColumnList()) {
                 String key = tc.getFiledName();
                 if (!json.contains(key) && (params.get(key) != null || nullSet.contains(key))) {

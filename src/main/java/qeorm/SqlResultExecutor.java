@@ -397,7 +397,7 @@ public class SqlResultExecutor {
             List datas = (List<Map>) result.getResult();
             if (datas != null && datas.size() > 0) {
                 for (int i = 0; i < datas.size(); i++) {
-                    datas.set(i, JsonUtils.convert(datas.get(i), clz));
+                    datas.set(i, JsonUtils.convertWriteNull(datas.get(i), clz));
                 }
             }
             result.setResult(datas);
