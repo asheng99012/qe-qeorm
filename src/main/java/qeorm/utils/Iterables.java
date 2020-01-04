@@ -10,6 +10,29 @@ import java.util.Map;
 
 public class Iterables {
 
+    public static <T> Iterable<List<T>> chunk(List<T> list, int pageSize) {
+        return new Iterable<List<T>>() {
+            int from = 0;
+            int to = 0;
+
+            @Override
+            public Iterator<List<T>> iterator() {
+                return new AbstractIterator<List<T>>() {
+                    @Override
+                    protected List<T> computeNext() {
+                        if (from >= list.size())
+                            return endOfData();
+                        to = from + pageSize;
+                        if (to > list.size()) to = list.size();
+                        List<T> result = list.subList(from, to);
+                        from = to;
+                        return result;
+                    }
+                };
+            }
+        };
+    }
+
     public static <T> Iterable<List<T>> chunk(IChunkList iChunk) {
         return new Iterable<List<T>>() {
             @Override

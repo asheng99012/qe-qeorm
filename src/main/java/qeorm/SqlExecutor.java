@@ -140,6 +140,8 @@ public class SqlExecutor {
             className = className + "EsResultExecutor";
         else if (url.indexOf("mongodb") > -1)
             className = className + "MongoDbExecutor";
+        else if (url.indexOf("hive2") > -1)
+            className = className + "HiveResultExecutor";
         else
             className = className + "SqlResultExecutor";
         try {

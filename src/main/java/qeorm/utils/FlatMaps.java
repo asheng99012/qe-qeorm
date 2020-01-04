@@ -12,6 +12,7 @@ public class FlatMaps {
     }
 
     public static void flatMap(Map<String, Object> map, String prefix, Map<String, Object> params) {
+        if (params == null) return;
         params.forEach((key, val) -> {
             String curKey = prefix + key;
             if (val instanceof Map) {

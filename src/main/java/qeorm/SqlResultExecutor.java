@@ -15,9 +15,11 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import qeorm.intercept.IFunIntercept;
+import qeorm.intercept.IModelmodify;
 import qeorm.intercept.ObjectToJsonString;
 import qeorm.utils.ExtendUtils;
 import qeorm.utils.JsonUtils;
+import qeorm.utils.Models;
 import qeorm.utils.Wrap;
 
 import java.util.ArrayList;
@@ -458,10 +460,12 @@ public class SqlResultExecutor {
                 ModelBase clone = model.getClass().newInstance();
                 BeanMap beanMap = BeanMap.create(clone);
                 beanMap.put(table.getPrimaryField(), thisMap.get(table.getPrimaryField()));
-                int count = clone.count();
-                if (count > 0) {
+                clone = clone.selectOne();
+                if (clone != null) {
+                    Models.recordModifyLog(clone, model);
                     return update(model);
                 } else {
+                    Models.recordModifyLog(model.getClass().newInstance(), model);
                     return insert(model);
                 }
             } catch (Exception e) {
