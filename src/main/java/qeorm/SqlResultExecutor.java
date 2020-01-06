@@ -444,6 +444,10 @@ public class SqlResultExecutor {
         return ints.length;
     }
 
+    public int batchSave(String dbName, String tableName, String primaryKeyName, List<Map> dataList) {
+        throw new RuntimeException("暂不支持");
+    }
+
     public <T extends ModelBase> int insert(T model) {
         return model.insert2();
     }

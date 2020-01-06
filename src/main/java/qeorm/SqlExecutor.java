@@ -181,6 +181,13 @@ public class SqlExecutor {
     public static int batchInsert(String dbName, String tableName, String primaryKeyName, List<Map> dataList) {
         return getExecutorByDbname(dbName).batchInsert(dbName, tableName, primaryKeyName, dataList);
     }
+    public static int batchSave(String dbName, String tableName, List<Map> dataList) {
+        return getExecutorByDbname(dbName).batchSave(dbName, tableName, null, dataList);
+    }
+
+    public static int batchSave(String dbName, String tableName, String primaryKeyName, List<Map> dataList) {
+        return getExecutorByDbname(dbName).batchSave(dbName, tableName, primaryKeyName, dataList);
+    }
 
     public static int batchInsertModel(String dbName, String tableName, List<? extends ModelBase> dataList) {
         List<Map> list = new ArrayList<>();
