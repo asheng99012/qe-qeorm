@@ -39,7 +39,10 @@ public class SqlOrXmlExecutor {
     //模拟 select into
     public static void selectInto(String sqlOrXml, Map<String, Object> params, String fromDbName, String toDbName, String toTableName, int pageSize) {
         iterablesExec(sqlOrXml, params, fromDbName, pageSize, (list) -> {
-            SqlExecutor.batchInsert(toDbName, toTableName, list);
+            Iterables.<Map>chunk(list, 500).forEach(subList -> {
+                SqlExecutor.batchInsert(toDbName, toTableName, (List<Map>) subList);
+            });
+
         });
     }
 
@@ -49,6 +52,7 @@ public class SqlOrXmlExecutor {
             String executorName = SqlExecutor.getExecutorByDbname(dbName).getClass().getName();
             if (executorName.contains("HiveResultExecutor")
                     || isGroupBy(sqlOrXml)) {
+                params.remove("ps");
                 Iterables.<Map>chunk(execSqlOrXml(sqlOrXml, null, params, false, dbName), pageSize).forEach(list -> {
                     execList.exec((List) list);
                 });
@@ -103,13 +107,13 @@ public class SqlOrXmlExecutor {
                 count = SqlExecutor.execSqlForObject(countSql, params, Integer.class, dbName);
             }
             page.setTotal(count.longValue());
-            return (QePage) ret;
+            return page;
         }
         if (executorName.contains("SqlResultExecutor") || executorName.contains("HiveResultExecutor")) {
             if (!Strings.isNullOrEmpty(countSql)) {
                 count = SqlExecutor.execSqlForObject(countSql, params, Integer.class, dbName);
             } else {
-                count = SqlExecutor.execSqlForObject("select count(*) from (" + sql + " ) tt", params, Integer.class, dbName);
+//                count = SqlExecutor.execSqlForObject("select count(*) from (" + sql + " ) tt", params, Integer.class, dbName);
             }
             page.setTotal(count.longValue());
             return page;
@@ -147,13 +151,13 @@ public class SqlOrXmlExecutor {
                 count = SqlExecutor.execSqlForObject(countSql, params, Integer.class, dbName);
             }
             page.setTotal(count.longValue());
-            return (QePage) ret;
+            return page;
         }
         if (executorName.contains("SqlResultExecutor") || executorName.contains("HiveResultExecutor")) {
             if (!Strings.isNullOrEmpty(countSql)) {
                 count = SqlExecutor.execSqlForObject(countSql, params, Integer.class, dbName);
             } else {
-                count = SqlExecutor.execSqlForObject("select count(*) from (" + config.getSql() + " ) tt", params, Integer.class, config.getDbName());
+//                count = SqlExecutor.execSqlForObject("select count(*) from (" + config.getSql() + " ) tt", params, Integer.class, config.getDbName());
             }
             page.setTotal(count.longValue());
             return page;

@@ -38,16 +38,16 @@ public class SqlExecutor {
 
     public static <T> List<T> execSql(String sql, Map<String, Object> map, Class<T> returnType, String dbName) {
         String id = sql.replaceAll("\\s+", ".");
-        if (SqlConfigManager.getSqlConfig(id) == null) {
+//        if (SqlConfigManager.getSqlConfig(id) == null) {
             SqlConfig sqlConfig = new SqlConfig();
             sqlConfig.setId(id);
             sqlConfig.setSql(sql);
             sqlConfig.setDbName(dbName);
             sqlConfig.setReturnType(returnType.getName());
             SqlConfigManager.parseSql(sqlConfig);
-            SqlConfigManager.addSqlConfig(sqlConfig);
-        }
-        SqlResult sqlResult = exec(SqlConfigManager.getSqlConfig(id), map);
+//            SqlConfigManager.addSqlConfig(sqlConfig);
+//        }
+        SqlResult sqlResult = exec(sqlConfig, map);
         if (sqlResult.isOk())
             return (List<T>) sqlResult.getResult();
         return null;
