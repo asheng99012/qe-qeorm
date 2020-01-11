@@ -124,7 +124,11 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
         Object o = exec(SqlConfig.INSERT);
         if (o == null)
             return 0;
-        return Integer.parseInt(o.toString());
+        try {
+            return Integer.parseInt(o.toString());
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     public int update2() {
