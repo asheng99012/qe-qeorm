@@ -6,6 +6,7 @@ package qeorm;
 public class TableColumn {
     String clumnName;
     String filedName;
+    Class type;
 
     public String getClumnName() {
         return clumnName;
@@ -21,5 +22,13 @@ public class TableColumn {
 
     public void setFiledName(String filedName) {
         this.filedName = filedName;
+    }
+
+    public Class getType() {
+        return type;
+    }
+
+    public void setType(Class type) {
+        this.type = type;
     }
 }

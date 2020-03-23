@@ -16,6 +16,16 @@ public class TransactionalManager {
     SqlSession sqlSession;
     private Logger logger = LoggerFactory.getLogger(TransactionalManager.class);
 
+    @Around("@within(org.springframework.transaction.annotation.Transactional)")
+    public Object transactionalKlassSpring(ProceedingJoinPoint point) throws Throwable {
+        return transactional(point);
+    }
+
+    @Around("@annotation(org.springframework.transaction.annotation.Transactional)")
+    public Object transactionalKlassSpringMethod(ProceedingJoinPoint point) throws Throwable {
+        return transactional(point);
+    }
+
     @Around("@within(qeorm.annotation.Transactional)")
     public Object transactionalKlass(ProceedingJoinPoint point) throws Throwable {
         return transactional(point);
@@ -23,17 +33,17 @@ public class TransactionalManager {
 
     @Around("@annotation(qeorm.annotation.Transactional)")
     public Object transactional(ProceedingJoinPoint point) throws Throwable {
-        String key=point.getTarget().getClass().getCanonicalName() + ":" + point.getSignature().getName();
-        logger.info("开始事务："+key);
+        String key = point.getTarget().getClass().getCanonicalName() + ":" + point.getSignature().getName();
+        logger.info("开始事务：" + key);
         try {
             sqlSession.beginTransaction();
             Object ret = point.proceed();
             sqlSession.commit();
-            logger.info("提交事务："+key);
+            logger.info("提交事务：" + key);
             return ret;
         } catch (Throwable throwable) {
             sqlSession.rollback();
-            logger.info("回滚事务："+key);
+            logger.info("回滚事务：" + key);
             throw throwable;
         }
     }
@@ -45,8 +55,8 @@ public class TransactionalManager {
 
     @Around("@annotation(qeorm.annotation.Rollback)")
     public Object rollback(ProceedingJoinPoint point) throws Throwable {
-        String key=point.getTarget().getClass().getCanonicalName() + ":" + point.getSignature().getName();
-        logger.info("开始事务："+key);
+        String key = point.getTarget().getClass().getCanonicalName() + ":" + point.getSignature().getName();
+        logger.info("开始事务：" + key);
         try {
             sqlSession.beginTransaction();
             Object ret = point.proceed();
@@ -55,7 +65,7 @@ public class TransactionalManager {
             throw throwable;
         } finally {
             sqlSession.rollback();
-            logger.info("回滚事务："+key);
+            logger.info("回滚事务：" + key);
         }
     }
 }

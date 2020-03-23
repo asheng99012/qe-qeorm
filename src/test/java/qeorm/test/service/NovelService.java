@@ -10,12 +10,17 @@ import java.lang.reflect.InvocationTargetException;
 public class NovelService {
     @Test
     public void run() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-//        Tag tag = new Tag();
+//        Tag tag = new Tag().enhance();
 //        tag.setId(1);
 //        tag.setMyName("dsfsd");
+//        tag.setAdd_time(null);
+//        tag.setIs_show(null);
+//        tag.update();
 
         Novel novel = new Novel();
         novel.setTagId(23);
+//        novel.notIgnoreNull();
+        novel.insert();
         novel = novel.enhance();
         novel.getTagInfo();
 

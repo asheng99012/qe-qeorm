@@ -56,14 +56,14 @@ public class SqlConfigProxy<T> implements MethodInterceptor, FactoryBean<T> {
         } else {
             Map<String, Object> map = Maps.newHashMap();
             for (int i = 0; i < truct.getParameters().size(); i++) {
-                if(objects[i]!=null)
+                if (objects[i] != null)
                     map.put(truct.getParameters().get(i), objects[i]);
             }
             result = SqlExecutor.exec(sqlId, map);
         }
         if (result.getResult() != null) {
             if (RealClass.isPrimitive(truct.getKlass())) {
-                return result.getResult();
+                return JsonUtils.convert(result.getResult(), truct.getKlass());
             } else {
                 List list = (List) result.getResult();
                 if (truct.isList())
@@ -145,19 +145,19 @@ public class SqlConfigProxy<T> implements MethodInterceptor, FactoryBean<T> {
         if (klass != null) {
             sqlConfig.setReturnType(klass.getName());
 
-            if(!RealClass.isPrimitive(klass) && !klass.getName().equals("java.util.Map")){
+            if (!RealClass.isPrimitive(klass) && !klass.getName().equals("java.util.Map")) {
                 try {
 
                     Object obj = klass.newInstance();
-                    if(obj instanceof ModelBase){
+                    if (obj instanceof ModelBase) {
                         sqlConfig.setFunIntercepts("all", TableStruct.instance);
                     }
-                    if (obj instanceof IFunIntercept){
+                    if (obj instanceof IFunIntercept) {
                         sqlConfig.setFunIntercepts("all", (IFunIntercept) obj);
                     }
 
                 } catch (Exception e) {
-                    logger.error("实例化对象失败："+klass.getName());
+                    logger.error("实例化对象失败：" + klass.getName());
                     //throw e;
                 }
             }
@@ -176,24 +176,28 @@ public class SqlConfigProxy<T> implements MethodInterceptor, FactoryBean<T> {
             for (SqlConfig sc : sqlConfig.getSqlIntercepts()) {
                 completeSqlIntercepts(sc);
                 if (!Strings.isNullOrEmpty(sc.getReturnType()) || Strings.isNullOrEmpty(sc.getFillKey())) continue;
-                Field field = klazz.getDeclaredField(sc.getFillKey());
-                Class klass = MethodTruct.getRealClass(field.getGenericType());
-
+                Class klass;
+                if (klazz.getName().equals("java.util.Map") || klazz.getName().equals("java.util.List")) {
+                    klass = Map.class;
+                } else {
+                    Field field = klazz.getDeclaredField(sc.getFillKey());
+                    klass = MethodTruct.getRealClass(field.getGenericType());
+                }
                 if (klass != null) {
                     sc.setReturnType(klass.getName());
 
-                    if(!RealClass.isPrimitive(klass) && !klass.getName().equals("java.util.Map")){
+                    if (!RealClass.isPrimitive(klass) && !klass.getName().equals("java.util.Map")) {
                         try {
                             Object obj = klass.newInstance();
-                            if(obj instanceof ModelBase){
+                            if (obj instanceof ModelBase) {
                                 sqlConfig.setFunIntercepts("all", TableStruct.instance);
                             }
-                            if (obj instanceof IFunIntercept){
+                            if (obj instanceof IFunIntercept) {
                                 sqlConfig.setFunIntercepts("all", (IFunIntercept) obj);
                             }
 
                         } catch (Exception e) {
-                            logger.error("实例化对象失败："+klass.getName());
+                            logger.error("实例化对象失败：" + klass.getName());
                         }
                     }
 

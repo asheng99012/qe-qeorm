@@ -4,6 +4,7 @@ package qeorm;
  * Created by ashen on 2017-2-3.
  */
 public class SqlAnalysisNode {
+    String wholePrefix;
     String whole;
     String field;
     String operator="";
@@ -11,6 +12,14 @@ public class SqlAnalysisNode {
     String paramWhole;
     String param;
     String suffix;
+
+    public String getWholePrefix() {
+        return wholePrefix;
+    }
+
+    public void setWholePrefix(String wholePrefix) {
+        this.wholePrefix = wholePrefix;
+    }
 
     public String getWhole() {
         return whole;

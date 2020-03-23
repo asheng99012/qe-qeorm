@@ -1,6 +1,5 @@
 package qeorm;
 
-import com.alibaba.fastjson.TypeReference;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import org.slf4j.Logger;
@@ -18,6 +17,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,19 +28,21 @@ import static qeorm.utils.XmlUtils.getAttributes;
  */
 public class SqlConfigManager {
     private static Logger logger = LoggerFactory.getLogger(SqlConfigManager.class);
-    private static Map<String, SqlConfig> sqlConfigMap = new HashMap<String, SqlConfig>();
+    private static Map<String, SqlConfig> sqlConfigMap = new ConcurrentHashMap<>();
 
     private static int dsIdenty = 3;
 
-    public static String sqlSelectPattern = "\\s+(?i)([`\\.'a-zA-Z\\d_]+){1}\\s*(!=|>=|=<|=>|<=|<|>|=|\\s+like\\s+|\\s+in\\s+|\\s+not\\s+in\\s+|\\s+by\\s+){1}\\s*([\\(%'`\\.'a-zA-Z\\d_\\+\\-\\s]+){0,1}\\s*(\\{\\s*([a-zA-Z\\d_]+)\\s*\\}){1}(\\s*[\\)%']+){0,1}";
+    public static String sqlSelectPattern = "(\\s+|,|\\()(?i)([`\\.'a-zA-Z\\d_]+){1}\\s*(!=|>=|=<|=>|<=|<|>|=|<>|><|\\s+like\\s+|\\s+in\\s+|\\s+not\\s+in\\s+|\\s+by\\s+){1}\\s*([\\(%'`\\.'a-zA-Z\\d_\\+\\-\\s]+){0,1}\\s*(\\{\\s*([\\.a-zA-Z\\d_]+)\\s*\\}){1}(\\s*[\\)%']+){0,1}";
+    public static String sqlSelectPattern2 = "([^\\w`]+)(?i)([`\\.'a-zA-Z\\d_]+){1}\\s*(!=|>=|=<|=>|<=|<|>|=|<>|><|\\s+like\\s+|\\s+in\\s+|\\s+not\\s+in\\s+|\\s+by\\s+){1}\\s*([\\(%'`\\.'a-zA-Z\\d_\\+\\-\\s]+){0,1}\\s*(\\{\\s*([\\.a-zA-Z\\d_]+)\\s*\\}){1}(\\s*[\\)%']+){0,1}";
     public static String sqlInsertPattern = "\\{([a-zA-Z\\d_]+)+\\}";
-    public static String sqlAndOrPattern = "\\s+(?i)([`\\.'a-zA-Z\\d_]+){1}\\s*(&|\\|){1}\\s*(\\{\\s*([a-zA-Z\\d_]+)\\s*\\}){1}\\s*=\\s*(\\{\\s*([a-zA-Z\\d_]+)\\s*\\}){1}";
+    public static String sqlAndOrPattern = "\\s+(?i)([`\\.'a-zA-Z\\d_]+){1}\\s*(&|\\|){1}\\s*(\\{\\s*([\\.a-zA-Z\\d_]+)\\s*\\}){1}\\s*=\\s*(\\{\\s*([a-zA-Z\\d_]+)\\s*\\}){1}";
+    public static String sqlTablePattern = "\\s+(?i)(from|join|into|update)\\s+([`\\.a-zA-Z\\d_]+){1}";
 
-    public static String isCountPattern = "^\\s*(?i)select\\s+count\\s*\\(.+?\\)\\s+.+";
-    public static String isSelectPattern = "^\\s*(?i)select\\s+.+";
-    public static String isUpdatePattern = "^\\s*(?i)update\\s+.+";
-    public static String isDeletePattern = "^\\s*(?i)delete\\s+.+";
-    public static String isInsertPattern = "^\\s*(?i)insert\\s+.+";
+    public static String isCountPattern = "^\\s*(?i)select\\s+count\\s*\\(.+?\\)\\s+from[\\s\\S]+";
+    public static String isSelectPattern = "^\\s*(?i)select\\s+[\\s\\S]+";
+    public static String isUpdatePattern = "^\\s*(?i)update\\s+[\\s\\S]+";
+    public static String isDeletePattern = "^\\s*(?i)delete\\s+[\\s\\S]+";
+    public static String isInsertPattern = "^\\s*(?i)insert\\s+[\\s\\S]+";
 
     public static void setDsIdenty(int _dsIdenty) {
         dsIdenty = _dsIdenty;
@@ -56,22 +58,26 @@ public class SqlConfigManager {
 
 
         String sql = sqlConfig.getSql();
-        sql = sql.replaceAll("\\n", " ");
-        sql = sql.replaceAll("\\(", " \\(  ");
-        sql = sql.replaceAll("\\)", " \\)  ");
-        sql = sql.replaceAll(",", " , ");
-        sql = sql.replaceAll("\\s+", " ");
+//        sql = sql.replaceAll("\\n", " ");
+//        sql = sql.replaceAll("\\(", " \\(  ");
+//        sql = sql.replaceAll("\\)", " \\)  ");
+//        sql = sql.replaceAll(",", " , ");
+//        sql = sql.replaceAll("\\s+", " ");
+        sql = " " + sql.trim();
         sqlConfig.setSql(sql);
         if (sql.matches(isInsertPattern))
             parseInsertSql(sqlConfig);
         else parseSelectSql(sqlConfig);
+        parseTableName(sqlConfig);
         String sqlType;
         if (sql.matches(SqlConfigManager.isCountPattern)) {
             sqlType = SqlConfig.COUNT;
         } else if (sql.matches(SqlConfigManager.isSelectPattern)) {
             sqlType = SqlConfig.SELECT;
-        } else if (sql.matches(SqlConfigManager.isUpdatePattern) || sql.matches(SqlConfigManager.isDeletePattern)) {
+        } else if (sql.matches(SqlConfigManager.isUpdatePattern)) {
             sqlType = SqlConfig.UPDATE;
+        } else if (sql.matches(SqlConfigManager.isDeletePattern)) {
+            sqlType = SqlConfig.DELETE;
         } else if (sql.matches(SqlConfigManager.isInsertPattern)) {
             sqlType = SqlConfig.INSERT;
         } else {
@@ -103,14 +109,16 @@ public class SqlConfigManager {
         List<SqlAnalysisNode> list = new ArrayList<SqlAnalysisNode>();
         while (om.find()) {
             Matcher m = getRealMatcher(om);
+            m = getRealMatcher2(m);
             SqlAnalysisNode analysisNode = new SqlAnalysisNode();
             analysisNode.setWhole(m.group(0));
-            analysisNode.setField(m.group(1));
-            analysisNode.setOperator(m.group(2));
-            analysisNode.setPrefix(m.group(3));
-            analysisNode.setParamWhole(m.group(4));
-            analysisNode.setParam(m.group(5));
-            analysisNode.setSuffix(m.group(6));
+            analysisNode.setWholePrefix(m.group(1));
+            analysisNode.setField(m.group(2));
+            analysisNode.setOperator(m.group(3));
+            analysisNode.setPrefix(m.group(4));
+            analysisNode.setParamWhole(m.group(5));
+            analysisNode.setParam(m.group(6));
+            analysisNode.setSuffix(m.group(7));
 //            if (analysisNode.getWhole().endsWith(")") && analysisNode.getWhole().indexOf("(") == -1) {
             if (analysisNode.getWhole().endsWith(")") && (Strings.isNullOrEmpty(analysisNode.getPrefix()) || !analysisNode.getPrefix().startsWith("("))) {
                 analysisNode.setWhole(analysisNode.getWhole().replaceAll("\\)$", ""));
@@ -177,6 +185,17 @@ public class SqlConfigManager {
 
         sqlConfig.setGroup(list);
         sqlConfig.setFfList(ffList);
+    }
+
+    private static void parseTableName(SqlConfig sqlConfig) {
+        Matcher om = Pattern.compile(sqlTablePattern).matcher(sqlConfig.getSql());
+        while (om.find()) {
+            String name = om.group(2);
+            name = name.replaceAll("`", "");
+            if (name.indexOf(".") > 0)
+                name = name.substring(name.indexOf(".") + 1);
+            sqlConfig.setTableNameList(name);
+        }
     }
 
     /**
@@ -247,7 +266,7 @@ public class SqlConfigManager {
      * @return
      * @throws Exception
      */
-    private static SqlConfig createSqlConfig(Node element, Map<String, String> parentAttrs) throws Exception {
+    public static SqlConfig createSqlConfig(Node element, Map<String, String> parentAttrs) throws Exception {
         Map<String, String> map = new HashMap<String, String>();
         map.putAll(parentAttrs);
         map.putAll(getAttributes(element));
@@ -262,8 +281,16 @@ public class SqlConfigManager {
             map.put("returnType", returnType);
         SqlConfig sqlConfig = JsonUtils.convert(map, SqlConfig.class);
 
+        if (map.containsKey("ref")) {
+            SqlConfig ref = getSqlConfig(map.get("nameSpace") + "." + map.get("ref"));
+            if (ref == null)
+                throw new RuntimeException(map.get("nameSpace") + "." + map.get("ref") + ":不存在");
+            Map refMap = JsonUtils.convert(ref, Map.class);
+            refMap.putAll(JsonUtils.convert(sqlConfig, Map.class));
+            sqlConfig = JsonUtils.convert(refMap, SqlConfig.class);
+        }
         //如果ReturnType 不为空，则用TableStruct处理结果集
-        if (sqlConfig.getSql().matches(isSelectPattern) && sqlConfig.getReturnType() != null) {
+        if (sqlConfig.getSql() != null && sqlConfig.getSql().matches(isSelectPattern) && sqlConfig.getReturnType() != null) {
             sqlConfig.setFunIntercepts("all", TableStruct.instance);
         }
         /**
@@ -328,7 +355,8 @@ public class SqlConfigManager {
                 }
             }
         }
-        parseSql(sqlConfig);
+        if (sqlConfig.getSql() != null)
+            parseSql(sqlConfig);
 
         return sqlConfig;
     }
@@ -353,6 +381,13 @@ public class SqlConfigManager {
                 return m;
         }
 
+        return om;
+    }
+
+    public static Matcher getRealMatcher2(Matcher om) {
+        Matcher m = Pattern.compile(sqlSelectPattern2).matcher(om.group(0));
+        if (m.find())
+            return m;
         return om;
     }
 }

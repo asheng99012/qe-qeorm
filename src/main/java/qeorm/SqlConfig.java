@@ -33,6 +33,7 @@ public class SqlConfig {
     private String id;
     private String dbName;
     private String paramNode;
+    private String proxy;
     private boolean isCache = false;
     private boolean isTran = false;
     private String sql;
@@ -45,6 +46,7 @@ public class SqlConfig {
     private String refId;
     private boolean autoPage;
     private String tableName;
+    private List<String> tableNameList;
     private String canEmptyParams = "";
     private boolean isSelect;
 
@@ -53,12 +55,12 @@ public class SqlConfig {
     private List<SqlAndOrNode> andOrNodes;
     private List<String> ffList;
     private Class klass;
-    private boolean isPrimitive=false;
+    private boolean isPrimitive = false;
     String sqlType;
     String parentDbName;
 
     public List<SqlAndOrNode> getAndOrNodes() {
-        if(andOrNodes==null)return new ArrayList<SqlAndOrNode>();
+        if (andOrNodes == null) return new ArrayList<SqlAndOrNode>();
         return andOrNodes;
     }
 
@@ -113,6 +115,7 @@ public class SqlConfig {
     }
 
     public void setCanEmptyParams(String canEmptyParams) {
+        if (canEmptyParams == null) return;
         this.canEmptyParams = "," + canEmptyParams + ",";
     }
 
@@ -134,7 +137,10 @@ public class SqlConfig {
     }
 
     public void setTableName(String tableName) {
+        if (tableName == null) return;
         this.tableName = tableName.replaceAll("`", "").replaceAll("'", "");
+        if (!Strings.isNullOrEmpty(this.tableName))
+            this.setTableNameList(this.tableName);
     }
 
     public String getParentId() {
@@ -192,16 +198,19 @@ public class SqlConfig {
     }
 
     public void setSqlIntercepts(SqlConfig sqlConfig) {
+        if (sqlConfig == null) return;
         getSqlIntercepts().add(sqlConfig);
     }
 
 
-    public List<IRowCallback> getRowCallbacks(){
-        if(rowCallbacks==null)
-            rowCallbacks=Lists.newArrayList();
+    public List<IRowCallback> getRowCallbacks() {
+        if (rowCallbacks == null)
+            rowCallbacks = Lists.newArrayList();
         return rowCallbacks;
     }
-    public void setRowCallbacks(IRowCallback rowCallback){
+
+    public void setRowCallbacks(IRowCallback rowCallback) {
+        if (rowCallback == null) return;
         getRowCallbacks().add(rowCallback);
     }
 
@@ -222,7 +231,7 @@ public class SqlConfig {
     }
 
     public String getDbName() {
-        return dbName;
+        return CacheManager.instance.getRealDbName(dbName, getTableNameList());
     }
 
     public void setDbName(String dbName) {
@@ -274,14 +283,16 @@ public class SqlConfig {
     }
 
     public void setReturnType(String returnType) {
-        this.klass=RealClass.getRealClass(returnType);
+        if (returnType == null) return;
+        this.klass = RealClass.getRealClass(returnType);
         this.returnType = this.klass.getName();
-        this.isPrimitive=RealClass.isPrimitive(this.klass);
+        this.isPrimitive = RealClass.isPrimitive(this.klass);
     }
 
-    public boolean isPrimitive(){
+    public boolean isPrimitive() {
         return this.isPrimitive;
     }
+
     public List<Pair<String, IFunIntercept>> getFunIntercepts() {
         if (funIntercepts == null)
             funIntercepts = Lists.newArrayList();
@@ -289,6 +300,7 @@ public class SqlConfig {
     }
 
     public void setFunIntercepts(String key, IFunIntercept clz) {
+        if (key == null || clz == null) return;
         getFunIntercepts().add(new MutablePair<>(key, clz));
     }
 
@@ -299,8 +311,25 @@ public class SqlConfig {
     }
 
     public void setParamIntercepts(String key, IFunIntercept clz) {
+        if (key == null || clz == null) return;
         getParamIntercepts().add(new MutablePair<>(key, clz));
     }
 
+    public void setTableNameList(String tableName) {
+        if (tableNameList == null) tableNameList = new ArrayList<>();
+        tableNameList.add(tableName);
+    }
 
+    public List<String> getTableNameList() {
+        if (tableNameList == null) tableNameList = new ArrayList<>();
+        return tableNameList;
+    }
+
+    public String getProxy() {
+        return proxy;
+    }
+
+    public void setProxy(String proxy) {
+        this.proxy = proxy;
+    }
 }

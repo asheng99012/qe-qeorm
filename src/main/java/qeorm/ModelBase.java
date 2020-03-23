@@ -5,10 +5,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.google.common.base.Splitter;
 import org.springframework.beans.BeanUtils;
@@ -49,13 +46,39 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
     private Integer ps;
 
     @Transient
+    private Boolean needCount;
+
+    @Transient
     private Boolean withRelation;
+
+    @Transient
+    private Boolean _ignoreNull = true;
+
+    @Transient
+    private Set<String> nullSet;
+
+    public void ignoreNull() {
+        _ignoreNull = true;
+    }
+
+    public void notIgnoreNull() {
+        _ignoreNull = false;
+    }
 
     public Boolean isWithRelation() {
         return withRelation;
     }
 
     public ModelBase() {
+        nullSet = new HashSet<>();
+    }
+
+    public void addKeyNullSet(String key) {
+        nullSet.add(key);
+    }
+
+    public void removeKeyNullSet(String key) {
+        if (nullSet.contains(key)) nullSet.remove(key);
     }
 
     public Integer getPn() {
@@ -76,20 +99,59 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
         this.ps = ps;
     }
 
-    public int save() {
-        TableStruct table = TableStruct.getTableStruct(this.getClass().getName());
-        String key = table.getPrimaryField();
-        BeanMap map = BeanMap.create(this);
-        if (map.containsKey(key))
-            return update();
-        return insert();
+    public Boolean getNeedCount() {
+        return needCount;
     }
 
+    public void setNeedCount(Boolean needCount) {
+        this.needCount = needCount;
+    }
+
+
     public int insert() {
+        return SqlExecutor.insert(this);
+    }
+
+    public int update() {
+        return SqlExecutor.update(this);
+    }
+
+    public int save() {
+        return SqlExecutor.save(this);
+    }
+
+    public int insert2() {
         Object o = exec(SqlConfig.INSERT);
         if (o == null)
             return 0;
+        try {
+            return Integer.parseInt(o.toString());
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    public int update2() {
+        Object o = exec(SqlConfig.UPDATE);
+        if (o == null)
+            return 0;
         return Integer.parseInt(o.toString());
+    }
+
+    public int save2() {
+        TableStruct table = TableStruct.getTableStruct(this.getClass().getName());
+        String key = table.getPrimaryField();
+        Map map = JsonUtils.convert(this, Map.class);
+        if (map.containsKey(key))
+            return update2();
+        return insert2();
+    }
+
+    public long insertLong() {
+        Object o = exec(SqlConfig.INSERT);
+        if (o == null)
+            return 0L;
+        return Long.parseLong(o.toString());
     }
 
     public <T> List<T> selectWithrelation() {
@@ -132,17 +194,12 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
     }
 
     public <T> T selectOne() {
+        this.pn = 1;
+        this.ps = 1;
         List<T> list = select();
         if (null == list || list.size() == 0)
             return null;
         return list.get(0);
-    }
-
-    public int update() {
-        Object o = exec(SqlConfig.UPDATE);
-        if (o == null)
-            return 0;
-        return Integer.parseInt(o.toString());
     }
 
     public int delete() {
@@ -161,10 +218,41 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
         // if (sqlIndex.equals(SqlConfig.SELECT) ||
         // sqlIndex.equals(SqlConfig.COUNT))
         // this.interceptSelect();
-        SqlResult sqlResult = SqlExecutor.exec(sqlIndexId(sqlIndex), this);
+        Map<String, Object> params;
+        if (_ignoreNull) params = JsonUtils.convert(this, Map.class);
+        else params = JsonUtils.convert(JsonUtils.toJsonWriteNull(this), Map.class);
+        for (String str : nullSet) {
+            params.put(str, null);
+        }
+        SqlResult sqlResult = SqlExecutor.exec(sqlIndexId(sqlIndex), params);
         if (sqlResult.isOk())
             return (T) sqlResult.getResult();
         return null;
+    }
+
+
+    public Map fetchRealVal() {
+        Set json = new HashSet();
+        json.add("pn");
+        json.add("ps");
+        json.add("_ignoreNull");
+        json.add("withRelation");
+        json.add("nullSet");
+        json.add("needCount");
+
+
+        Map<String, Object> params = BeanMap.create(this);
+        TableStruct table = TableStruct.getTableStruct(this.getClass().getName());
+        Map data = new HashMap();
+        if (table != null) {
+            for (TableColumn tc : table.getTableColumnList()) {
+                String key = tc.getFiledName();
+                if (!json.contains(key) && (params.get(key) != null || nullSet.contains(key))) {
+                    data.put(tc.getClumnName(), params.get(key));
+                }
+            }
+        }
+        return data;
     }
 
     public void interceptInsert(SqlConfig sqlConfig) {
@@ -183,6 +271,10 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
         return getClass().getName() + "." + action;
     }
 
+    protected boolean primaryKeyIntoDb() {
+        return false;
+    }
+
     protected SqlConfig createSqlConfig(String type) {
         String sqlId = sqlIndexId(type);
         if (SqlConfigManager.getSqlConfig(sqlId) == null) {
@@ -194,7 +286,7 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
                 List<String> ff = Lists.newArrayList();
                 List<String> vv = Lists.newArrayList();
                 for (TableColumn tc : table.getTableColumnList()) {
-                    if (tc.getClumnName().equals(table.getPrimaryKey()))
+                    if (primaryKeyIntoDb() && tc.getClumnName().equals(table.getPrimaryKey()))
                         continue;
                     ff.add("`" + tc.getClumnName() + "`");
                     vv.add("{" + tc.getFiledName() + "}");
@@ -239,7 +331,7 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
 
             if (SqlConfig.COUNT.equals(type)) {
                 interceptSelect(sqlConfig);
-                sqlConfig.setSql(StringFormat.format("select count(1) from `{0}` where {1}", table.getTableName(),
+                sqlConfig.setSql(StringFormat.format("select count(*) from `{0}` where {1}", table.getTableName(),
                         table.getWhere()));
                 sqlConfig.setDbName(table.getSlaveDbName());
             }
@@ -277,16 +369,22 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
     }
 
     public <T> T enhance() {
-        return (T) new EnhanceModel().createProxy(this);
+        return (T) enhance(false);
+    }
+
+    public <T> T enhance(boolean deep) {
+        return (T) new EnhanceModel().createProxy(this, deep);
     }
 
     public static class EnhanceModel<T extends ModelBase> implements MethodInterceptor {
         private static Map<String, Field> fieldMap = new HashMap<>();
         //要代理的原始对象
         private T target;
+        private boolean deep;
 
-        public T createProxy(T target) {
+        public T createProxy(T target, boolean deep) {
             this.target = target;
+            this.deep = deep;
             Enhancer enhancer = new Enhancer();
             enhancer.setSuperclass(this.target.getClass());
             enhancer.setCallback(this);
@@ -298,6 +396,12 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
         public Object intercept(Object o, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {
             if (target == null) return null;
             Object result = methodProxy.invoke(target, objects);
+            if (method.getName().startsWith("set")) {
+                String filedName = method.getName().substring(3, 4).toLowerCase() + method.getName().substring(4);
+                Object val = objects[0];
+                if (val == null) target.addKeyNullSet(filedName);
+                else target.removeKeyNullSet(filedName);
+            }
             if (result == null && method.getName().startsWith("get")) {
                 String filedName = method.getName().substring(3, 4).toLowerCase() + method.getName().substring(4);
                 String id = target.sqlIndexId(SqlConfig.SELECT) + "." + filedName;
@@ -314,10 +418,14 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
                         if (sqlResult.isOk()) {
                             List list = (List) sqlResult.getResult();
                             if (list.size() > 0) {
+                                List _list = new ArrayList();
+                                for (int i = 0; i < list.size(); i++) {
+                                    _list.add(enhance(list.get(i)));
+                                }
                                 if (sqlConfig.getExtend().equals(ExtendUtils.ONE2ONE)) {
-                                    result = list.get(0);
+                                    result = _list.get(0);
                                 } else {
-                                    result = list;
+                                    result = _list;
                                 }
                                 getTargetField(filedName).set(target, result);
                             }
@@ -329,6 +437,12 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
 
 
             return result;
+        }
+
+        private Object enhance(Object obj) {
+            if (deep && obj instanceof ModelBase)
+                return ((ModelBase) obj).enhance();
+            return obj;
         }
 
         private Field getTargetField(String filedName) throws NoSuchFieldException {

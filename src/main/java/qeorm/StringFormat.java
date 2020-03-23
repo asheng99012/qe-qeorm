@@ -49,9 +49,30 @@ public class StringFormat {
         Matcher m = p.matcher(str);
         StringBuffer sb = new StringBuffer();
         while (m.find()) {
-            m.appendReplacement(sb, operator.exec(m));
+            String ret = operator.exec(m);
+            if (ret == null) ret = "null";
+            ret = ret.replaceAll("\\\\", "\\\\\\\\").replaceAll("\\$", "");
+            m.appendReplacement(sb, ret);
+//            m.appendReplacement(sb, operator.exec(m));
         }
         m.appendTail(sb);
         return sb.toString();
+    }
+
+    public static String format(String str) {
+        if (str.contains("${")) {
+            str = StringFormat.format(str, new AbstractRegexOperator() {
+                @Override
+                public String getPattern() {
+                    return "\\$\\{([^\\}]+)\\}";
+                }
+
+                @Override
+                public String exec(Matcher m) {
+                    return SpringUtils.getProperty(m.group(1));
+                }
+            });
+        }
+        return str;
     }
 }

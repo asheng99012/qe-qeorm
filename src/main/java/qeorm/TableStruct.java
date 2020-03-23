@@ -67,11 +67,11 @@ public class TableStruct implements IFunIntercept {
             table = (Table) klazz.getSuperclass().getAnnotation(Table.class);
         }
         if (table != null) {
-            primaryKey = table.primaryKey();
-            tableName = table.tableName();
+            primaryKey = StringFormat.format(table.primaryKey());
+            tableName = StringFormat.format(table.tableName());
             where = table.where();
-            slaveDbName=table.slaveDbName();
-            masterDbName=table.masterDbName();
+            slaveDbName = StringFormat.format(table.slaveDbName());
+            masterDbName = StringFormat.format(table.masterDbName());
         }
 
         isMapped = false;
@@ -104,6 +104,7 @@ public class TableStruct implements IFunIntercept {
                 TableColumn tableColumn = new TableColumn();
                 tableColumn.setClumnName(columnName);
                 tableColumn.setFiledName(field[i].getName());
+                tableColumn.setType(field[i].getType());
                 tableColumnList.add(tableColumn);
                 if (!tableColumn.getClumnName().equals(tableColumn.getFiledName())) isMapped = true;
             }
@@ -147,7 +148,7 @@ public class TableStruct implements IFunIntercept {
                 relationStruct.setFillKey(field.getName());
                 relationStruct.setExtend(ExtendUtils.ONE2ONE);
                 relationStruct.setClazz(field.getType());
-                relationStruct.setWhere(" `" + tableStruct.getFcMap().get(ones.mappedBy()) + "` in ({" + fcMap.get(ones.self()) + "})");
+                relationStruct.setWhere(" `" + tableStruct.getFcMap().get(ones.mappedBy()) + "` in ({" + fcMap.get(ones.self()) + "}) " + ones.suffix());
                 relationStructList.add(relationStruct);
             } else {
                 OneToMany oneToMany = (OneToMany) obj;
@@ -160,7 +161,7 @@ public class TableStruct implements IFunIntercept {
                 relationStruct.setRelationKey(fcMap.get(oneToMany.self()) + "|" + tableStruct.getFcMap().get(oneToMany.mappedBy()));
                 relationStruct.setFillKey(field.getName());
                 relationStruct.setExtend(ExtendUtils.ONE2MANY);
-                relationStruct.setWhere(" `" + tableStruct.getFcMap().get(oneToMany.mappedBy()) + "` in ({" + fcMap.get(oneToMany.self()) + "})");
+                relationStruct.setWhere(" `" + tableStruct.getFcMap().get(oneToMany.mappedBy()) + "` in ({" + fcMap.get(oneToMany.self()) + "}) " + oneToMany.suffix());
                 relationStructList.add(relationStruct);
             }
         }
