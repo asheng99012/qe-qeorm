@@ -56,8 +56,8 @@ qeorm:
       mongodb:
         class: com.github.vincentrussell.query.mongodb.sql.converter.jdbc.MongodbDataSource
         url: mongodb://172.18.130.50:27017
-        username: program
-        password: piV5LDa44vGAwSq8
+        username: 234
+        password: 1234566
         database: installment
         maxPoolSize: 10
         waitQueueMultiple: 100
