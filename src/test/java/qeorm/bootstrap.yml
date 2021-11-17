@@ -1,0 +1,12 @@
+qeorm:
+  datasource:
+    defaultDataSource: tianya
+    dataSourcesMap:
+      tianyaMaster:
+        url: jdbc:mysql://127.0.0.1:3306/tianya?characterEncoding=utf-8&autoReconnect=true&failOverReadOnly=false&serverTimezone=Asia/Shanghai
+        username: root
+        password: 123456
+      tianyaSlave:
+        url: jdbc:mysql://127.0.0.1:3306/tianya?characterEncoding=utf-8&autoReconnect=true&failOverReadOnly=false&serverTimezone=Asia/Shanghai
+        username: root
+        password: 123456

@@ -1,9 +1,7 @@
 package qeorm.test.service;
 
-import org.junit.Test;
-import qeorm.TableStruct;
+import org.junit.jupiter.api.Test;
 import qeorm.test.model.Novel;
-import qeorm.test.model.Tag;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -18,9 +16,13 @@ public class NovelService {
 //        tag.update();
 
         Novel novel = new Novel();
-        novel.setTagId(23);
+        novel.setId(12);
+        //novel.setTagId(23);
+        novel=novel.selectOne();
 //        novel.notIgnoreNull();
-        novel.insert();
+//        novel.insert();
+//        List<Novel> list= novel.selectWithrelation();
+
         novel = novel.enhance();
         novel.getTagInfo();
 

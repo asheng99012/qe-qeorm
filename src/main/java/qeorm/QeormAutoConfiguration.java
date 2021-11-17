@@ -1,15 +1,13 @@
 package qeorm;
 
-import org.springframework.boot.autoconfigure.AutoConfigureOrder;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.Ordered;
 import org.springframework.core.env.Environment;
 
 @Configuration
-@AutoConfigureOrder(Ordered.HIGHEST_PRECEDENCE)
 public class QeormAutoConfiguration {
 
     @Bean
@@ -24,7 +22,8 @@ public class QeormAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnProperty(prefix = "qeorm.datasource", name = "defaultDataSource")
+//    @ConditionalOnProperty(prefix = "qeorm.datasource", name = "defaultDataSource")
+    @ConfigurationProperties(prefix = "qeorm.datasource")
     public SqlSession qeormSqlSession() {
         return new SqlSession();
     }
@@ -36,7 +35,7 @@ public class QeormAutoConfiguration {
     }
 
     @Bean
-    @ConditionalOnProperty(prefix = "qeorm.mapper", name = "basePackage")
+    @ConditionalOnProperty(prefix = "qeorm.mapper", name = "mapperLocations")
     public QeormBeanDefinitionRegistryPostProcessor qeormBeanDefinitionRegistryPostProcessor(Environment env) {
         return new QeormBeanDefinitionRegistryPostProcessor(env);
     }

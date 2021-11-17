@@ -172,7 +172,7 @@ public class SqlOrXmlExecutor {
     }
 
 
-    private static boolean isGroupBy(String sqlOrXml) {
+    public static boolean isGroupBy(String sqlOrXml) {
         String sql = sqlOrXml;
         if (sqlOrXml.contains("<sqlConfig")) {
             Element element = null;

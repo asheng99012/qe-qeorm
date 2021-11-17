@@ -1,9 +1,6 @@
 package qeorm.test;
 
-import org.junit.Test;
-import qeorm.SqlAnalysisNode;
-import qeorm.SqlConfig;
-import qeorm.SqlConfigManager;
+import org.junit.jupiter.api.Test;
 import qeorm.utils.JsonUtils;
 
 import java.util.ArrayList;

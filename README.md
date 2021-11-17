@@ -13,21 +13,49 @@
 
 # 实战
 
+
+## 添加引用
+```xml
+<dependency>
+    <groupId>com.github</groupId>
+    <artifactId>qeorm</artifactId>
+    <version>2.0.0-SNAPSHOT</version>
+</dependency>
+```
+
+##  Application 配置
+```java
+@QeMapperScan({"com.tianya","com.xxx"})
+public class Application {
+    public static void main(String[] args) {
+        SpringApplication.run(Application.class, args);
+    }
+}
+```
 ## dao用法
-``` java
+```java
 package qeorm.test.news.dao;
 
+import qeorm.annotation.QeMapper;
 import qeorm.test.model.Novel;
 import java.util.List;
-
+@QeMapper
 public interface INovelDao {
     List<Novel> getNovelList(Novel novel);
     //如果参数时基本类型，则必须用 @qeorm.annotation.SqlParam注解标注参数名称
      List<UserStar> list(@SqlParam("userId") Integer userId, @SqlParam("roomIds") Integer[] roomIds);
 }
 ```
-对应的xml配置文件的写法
-``` xml
+## sql xml配置
+1. 在application.yml 中添加
+```yaml
+## qeorm 配置
+qeorm:
+  mapper:
+    mapperLocations: classpath*:qeorm/**/*.xml
+```
+2. 对应的xml配置文件的写法
+```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 根节点 必须 是sqlConfigs
@@ -84,67 +112,16 @@ dbName：数据库组名称，可以为空，默认为 nameSpace的第三部分�
 </sqlConfigs>
 ```
 
-## 与spring结合的配置方法
-``` xml
-    //配置 DataSource，与常规的没有区别，
-    <bean id="masterDataSource" class="com.alibaba.druid.pool.DruidDataSource"
-          init-method="init" destroy-method="close">
-        <property name="url" value="${jdbc.master.url}"/>
-        <property name="driverClassName" value="${jdbc.master.driver}"/>
-        <property name="username" value="${jdbc.master.username}"/>
-        <property name="password" value="${jdbc.master.password}"/>
-        .....
-    </bean>
-    <bean id="slaveDataSource" class="com.alibaba.druid.pool.DruidDataSource"
-          init-method="init" destroy-method="close">
-          ........
-    </bean>
-    <bean id="userMasterDataSource" class="com.alibaba.druid.pool.DruidDataSource"
-          init-method="init" destroy-method="close">
-          ........
-    </bean>
-    <bean id="userSlaveDataSource" class="com.alibaba.druid.pool.DruidDataSource"
-          init-method="init" destroy-method="close">
-          ........
-    </bean>
-
-    <!--
-    用qeorm管理数据库事务
-    -->
-    <bean class="qeorm.TransactionalManager"/>
-
-    <!--配置qeorm要扫描的接口以及xml文件-->
-    <bean class="qeorm.MapperScanner">
-        <property name="basePackage" value="com.dankegongyu.**.dao"/>
-        <property name="mapperLocations" value="classpath*:com/dankegongyu/**/dao/*.xml"/>
-        <!--此项默认为3，可以不配置-->
-        <property name="dsIdenty" value="3"/>
-    </bean>
-
-    <!--配置 qeorm 需要的数据源-->
-    <bean class="qeorm.SqlSession">
-        <!-- qeorm 的数据源都是成对出现的，即 xxxMaster  xxxSlave，此项是设置默认的数据库源-->
-        <property name="defaultDataSource" value="default"/>
-        <property name="dataSources">
-            <map>
-                <entry key="defaultMaster" value-ref="masterDataSource"/>
-                <entry key="defaultSlave" value-ref="slaveDataSource"/>
-                <entry key="userSlave" value-ref="userSlaveDataSource"/>
-                <entry key="userMaster" value-ref="userSlaveDataSource"/>
-            </map>
-        </property>
-    </bean>
-```
 ## 开启写库缓存
 在读写分离的场景中，有时候需要刚写完库，就需要读出这条数据，在数据同步延迟的时候就会出现问题，添加以下配置，就可以实现：当前线程有写某表的操作，则后续所有的读此表的操作都走写库
-``` xml
+```xml
     <filter>
         <filter-name>CacheManager</filter-name>
         <filter-class>qeorm.CacheManager</filter-class>
     </filter>
 ```
 有时候需要手动开启此配置，具体代码如下
-``` java
+```java
         CacheManager.instance.open();
         try {
             //todo
@@ -158,7 +135,7 @@ dbName：数据库组名称，可以为空，默认为 nameSpace的第三部分�
 
 ## 对于简单应用，直接使用orm效率会更高
 常规的model的写法如下：
-``` java
+```java
 package qeorm.test.model;
 
 import qeorm.ModelBase;
@@ -251,82 +228,7 @@ public class Novel extends ModelBase {
     //执行sql,sql语句参考 xml 中的sql写法，参数也是用{xxx}标识，也是根据map中是否有有值自动取舍
     qeorm.SqlExecutor.execSql(String sql, Map<String, Object> map, String dbName)
 ```
- `qeorm.SqlExecutor.execSql` 重载
- ![SqlExecutor](1.png)
+`qeorm.SqlExecutor.execSql` 重载
+![SqlExecutor](1.png)
 
 
-
-
-# 如何使用
-
-## 添加引用
-```xml
-        <dependency>
-            <groupId>com.danke.arch</groupId>
-            <artifactId>dk-common-qeorm</artifactId>
-            <version>2.0.0-SNAPSHOT</version>
-        </dependency>
-```
-> 如果想用 qeorm-mongo ，还需要添加以下依赖
-```xml
-        <dependency>
-            <groupId>com.danke.arch</groupId>
-            <artifactId>dk-common-qeorm-mongodb</artifactId>
-            <version>2.0.0-SNAPSHOT</version>
-        </dependency>   
-
-```
-
-## 在启动类上添加
-``` java
-@Import({Config.class, QeormConfig.class})
-```
-
-## 在配置文件中添加配置
-``` yaml
-qeorm:
-  mapper:
-    basePackage: com.danke.rundata
-    mapperLocations: classpath*:qeorm/**/*.xml
-  datasource:
-    defaultDataSource: default
-    dataSourcesMap:
-      defaultConfig:
-        class: com.alibaba.druid.pool.DruidDataSource
-        driverClassName: com.mysql.jdbc.Driver
-        maxActive: 100
-        initialSize: 5
-        maxWait: 6000
-        minIdle: 1
-        timeBetweenEvictionRunsMillis: 3000
-        minEvictableIdleTimeMillis: 300000
-        validationQuery: select 1
-        testWhileIdle: true
-        testOnBorrow: false
-        testOnReturn: true
-        poolPreparedStatements: false
-        maxPoolPreparedStatementPerConnectionSize: 20
-        removeAbandoned: true
-        removeAbandonedTimeout: 1800
-        logAbandoned: true
-      laputa:
-        url: jdbc:mysql://172.21.32.5:3306/Laputa?useUnicode=true&characterEncoding=utf-8
-        username: 23423
-        password: 234234
-        
-      mongodb:
-        class: com.github.vincentrussell.query.mongodb.sql.converter.jdbc.MongodbDataSource
-        url: mongodb://172.18.130.50:27017
-        username: 234
-        password: 1234566
-        database: installment
-        maxPoolSize: 10
-        waitQueueMultiple: 100
-        safe: true
-        connectTimeout: 10000
-        serverSelectionTimeout: 30000
-        readPreference: secondaryPreferred
-        authMechanism: SCRAM-SHA-1
-        
-
-```

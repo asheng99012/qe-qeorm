@@ -1,7 +1,7 @@
 qeorm:
   datasource:
     defaultConfig:
-      class: com.alibaba.druid.pool.DruidDataSource
+      type: com.alibaba.druid.pool.DruidDataSource
       driverClassName: com.mysql.cj.jdbc.Driver
       maxActive: 100
       initialSize: 5

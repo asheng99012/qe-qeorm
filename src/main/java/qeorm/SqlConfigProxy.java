@@ -5,8 +5,9 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.FactoryBean;
+import org.springframework.cglib.core.ClassLoaderAwareGeneratorStrategy;
+import org.springframework.cglib.core.SpringNamingPolicy;
 import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
@@ -120,7 +121,11 @@ public class SqlConfigProxy<T> implements MethodInterceptor, FactoryBean<T> {
     public T getObject() throws Exception {
         Enhancer enhancer = new Enhancer();
         enhancer.setInterfaces(new Class[]{mapperInterface});
+        enhancer.setNamingPolicy(SpringNamingPolicy.INSTANCE);
+        enhancer.setStrategy(new ClassLoaderAwareGeneratorStrategy(mapperInterface.getClassLoader()));
+//        enhancer.setSuperclass(mapperInterface);
         enhancer.setCallback(this);
+        enhancer.setClassLoader(mapperInterface.getClassLoader());
         return (T) enhancer.create();
     }
 

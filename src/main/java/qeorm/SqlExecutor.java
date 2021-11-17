@@ -1,13 +1,12 @@
 package qeorm;
 
-import com.alibaba.druid.pool.DruidAbstractDataSource;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcDaoSupport;
 import qeorm.utils.JsonUtils;
 
-import javax.sql.DataSource;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by ashen on 2017-2-4.
@@ -39,12 +38,12 @@ public class SqlExecutor {
     public static <T> List<T> execSql(String sql, Map<String, Object> map, Class<T> returnType, String dbName) {
         String id = sql.replaceAll("\\s+", ".");
 //        if (SqlConfigManager.getSqlConfig(id) == null) {
-            SqlConfig sqlConfig = new SqlConfig();
-            sqlConfig.setId(id);
-            sqlConfig.setSql(sql);
-            sqlConfig.setDbName(dbName);
-            sqlConfig.setReturnType(returnType.getName());
-            SqlConfigManager.parseSql(sqlConfig);
+        SqlConfig sqlConfig = new SqlConfig();
+        sqlConfig.setId(id);
+        sqlConfig.setSql(sql);
+        sqlConfig.setDbName(dbName);
+        sqlConfig.setReturnType(returnType.getName());
+        SqlConfigManager.parseSql(sqlConfig);
 //            SqlConfigManager.addSqlConfig(sqlConfig);
 //        }
         SqlResult sqlResult = exec(sqlConfig, map);
@@ -121,17 +120,25 @@ public class SqlExecutor {
         if (!Strings.isNullOrEmpty(sqlConfig.getProxy())) {
             return new ProxyExecutor();
         }
-        NamedParameterJdbcDaoSupport jdbc = (NamedParameterJdbcDaoSupport) SqlSession.instance.getSupport(sqlConfig.getDbName());
-        DruidAbstractDataSource dataSource = (DruidAbstractDataSource) jdbc.getDataSource();
-        String url = dataSource.getUrl();
-        return getExecutor(url);
+        return getExecutorByDbname(sqlConfig.getDbName());
     }
 
     public static SqlResultExecutor getExecutorByDbname(String dbName) {
-        NamedParameterJdbcDaoSupport jdbc = (NamedParameterJdbcDaoSupport) SqlSession.instance.getSupport(dbName);
-        DruidAbstractDataSource dataSource = (DruidAbstractDataSource) jdbc.getDataSource();
-        String url = dataSource.getUrl();
-        return getExecutor(url);
+//        return new SqlResultExecutor();
+        if (SqlSession.dataSourcesMap == null) {
+
+            return getExecutor("");
+        }
+        Map<String, String> map = SqlSession.dataSourcesMap.get(dbName);
+        if (map == null) {
+            return getExecutor("");
+        } else {
+            return getExecutor(map.get("url"));
+        }
+//        NamedParameterJdbcDaoSupport jdbc = (NamedParameterJdbcDaoSupport) SqlSession.instance.getSupport(dbName);
+//        DruidAbstractDataSource dataSource = (DruidAbstractDataSource) jdbc.getDataSource();
+//        String url = dataSource.getUrl();
+//        return getExecutor(url);
     }
 
     public static SqlResultExecutor getExecutor(String url) {
@@ -181,6 +188,7 @@ public class SqlExecutor {
     public static int batchInsert(String dbName, String tableName, String primaryKeyName, List<Map> dataList) {
         return getExecutorByDbname(dbName).batchInsert(dbName, tableName, primaryKeyName, dataList);
     }
+
     public static int batchSave(String dbName, String tableName, List<Map> dataList) {
         return getExecutorByDbname(dbName).batchSave(dbName, tableName, null, dataList);
     }

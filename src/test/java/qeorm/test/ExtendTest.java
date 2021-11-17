@@ -1,9 +1,8 @@
 package qeorm.test;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import qeorm.test.model.Novel;
 import qeorm.test.model.Tag;
-import qeorm.utils.ExtendUtils;
 import qeorm.utils.Wrap;
 
 import java.util.HashMap;

@@ -351,7 +351,7 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
                         continue;
                     up.add("`" + tc.getClumnName() + "`={" + tc.getFiledName() + "}");
                 }
-                sqlConfig.setSql(StringFormat.format("update `{0}` set {1} where {2}={{3}}", table.getTableName(),
+                sqlConfig.setSql(StringFormat.format("update `{0}` set {1} where `{2}`={{3}}", table.getTableName(),
                         Joiner.on(",").join(up), table.getPrimaryKey(), table.getPrimaryField()));
                 sqlConfig.setDbName(table.getMasterDbName());
             }

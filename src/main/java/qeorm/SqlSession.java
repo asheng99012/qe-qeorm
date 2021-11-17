@@ -1,8 +1,5 @@
 package qeorm;
 
-import com.alibaba.druid.pool.DruidAbstractDataSource;
-import com.alibaba.druid.pool.DruidDataSource;
-import com.alibaba.druid.pool.DruidDataSourceFactory;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
@@ -10,8 +7,9 @@ import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.cglib.beans.BeanMap;
+import org.springframework.beans.factory.support.BeanDefinitionBuilder;
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.NamedThreadLocal;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
@@ -19,28 +17,21 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcDaoSupport;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.TransactionStatus;
-import org.springframework.util.ReflectionUtils;
+import org.yaml.snakeyaml.Yaml;
 import qeorm.jdbc.QeNamedParameterJdbcDaoSupport;
-import qeorm.utils.ClassUtils;
 import qeorm.utils.JsonUtils;
 
 import javax.sql.DataSource;
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 
-import org.yaml.snakeyaml.Yaml;
-
 /**
  * Created by ashen on 2017-2-4.
  */
 
-@ConfigurationProperties(prefix = "qeorm.datasource")
+
 public class SqlSession {
 
     public final static String Master = "Master";
@@ -63,6 +54,8 @@ public class SqlSession {
             config = JsonUtils.convert(config.get("datasource"), Map.class);
             config = JsonUtils.convert(config.get("defaultConfig"), Map.class);
             defaultConfig = config;
+            instance = this;
+            SqlResultExecutor.setSqlSession(this);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage(), e.getCause());
         }
@@ -104,15 +97,16 @@ public class SqlSession {
 
     //----------------
 
-    private static Map<String, NamedParameterJdbcDaoSupport> jdbcTemplate = new HashMap<String, NamedParameterJdbcDaoSupport>();
+    private static Map<String, NamedParameterJdbcDaoSupport> jdbcTemplate =null;
 
     //    @Value("${qeorm.defaultDataSource}")
-    private String defaultDataSource;
+    private String defaultDataSource="default";
 
-    private Map<String, Map<String, String>> dataSourcesMap;
+    public static Map<String, Map<String, String>> dataSourcesMap;
 
     public void setDataSources(final Map<String, DataSource> dataSources) {
         String[] keys = Iterators.toArray(dataSources.keySet().iterator(), String.class);
+        jdbcTemplate=new HashMap<>();
         for (String input : keys) {
             logger.info("设置数据源{}", input);
             QeNamedParameterJdbcDaoSupport support = new QeNamedParameterJdbcDaoSupport();
@@ -124,28 +118,50 @@ public class SqlSession {
         SqlResultExecutor.setSqlSession(this);
     }
 
+    public void initJdbcTemplate(){
+        if(jdbcTemplate==null){
+            jdbcTemplate=new HashMap<>();
+            QeNamedParameterJdbcDaoSupport support = new QeNamedParameterJdbcDaoSupport();
+            support.setDataSource(SpringUtils.getBean(DataSource.class));
+            jdbcTemplate.put(defaultDataSource+Master, support);
+            jdbcTemplate.put(defaultDataSource+Slave, support);
+
+        }
+    }
+
     public void setDefaultDataSource(String _defaultDataSource) {
         defaultDataSource = _defaultDataSource;
     }
 
     //    @Value("${qeorm.dataSourcesMap}")
-    public void setDataSourcesMap(Map<String, Map<String, String>> dataSourcesMap) throws ClassNotFoundException, IllegalAccessException, InstantiationException, SQLException {
+    public void setDataSourcesMap(Map<String, Map<String, String>> _dataSourcesMap) throws ClassNotFoundException, IllegalAccessException, InstantiationException, SQLException {
+        dataSourcesMap=_dataSourcesMap;
         if (dataSourcesMap == null) return;
         Map<String, String> _defaultConfig = dataSourcesMap.get("defaultConfig");
         if (_defaultConfig != null)
             defaultConfig.putAll(_defaultConfig);
         Map<String, DataSource> dataSources = new HashMap<>();
+        BeanDefinitionRegistry beanFactory = (BeanDefinitionRegistry) ((ConfigurableApplicationContext) SpringUtils.getApplicationContext()).getBeanFactory();
         for (Map.Entry<String, Map<String, String>> entry : dataSourcesMap.entrySet()) {
             if (!entry.getKey().equals("defaultConfig")) {
                 Map<String, String> config = new HashMap<>();
                 config.putAll(defaultConfig);
                 config.putAll(entry.getValue());
-                DruidAbstractDataSource dataSource = (DruidAbstractDataSource) Class.forName(config.get("class")).newInstance();
 
-                ClassUtils.config(dataSource, config);
-                if (dataSource instanceof DruidDataSource)
-                    ((DruidDataSource) dataSource).init();
-                dataSources.put(entry.getKey(), dataSource);
+                String type=config.get("type");
+                if(Strings.isNullOrEmpty(type)){
+                    type=config.get("class");
+                }
+                config.remove("type");
+                config.remove("class");
+                //创建bean信息.
+                BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder.genericBeanDefinition(Class.forName(type));
+                for (Map.Entry<String, String> kv : config.entrySet()) {
+                    String field = kv.getKey();
+                    beanDefinitionBuilder.addPropertyValue(kv.getKey(), kv.getValue());
+                }
+                beanFactory.registerBeanDefinition(entry.getKey(), beanDefinitionBuilder.getBeanDefinition());
+                dataSources.put(entry.getKey(), (DataSource) SpringUtils.getBean(entry.getKey()));
             }
         }
         setDataSources(dataSources);
@@ -163,6 +179,7 @@ public class SqlSession {
     }
 
     public NamedParameterJdbcDaoSupport getSupport(String _dbName) {
+        initJdbcTemplate();
         String dbName = _dbName;
         if (Strings.isNullOrEmpty(_dbName)) dbName = defaultDataSource + Master;
         if (!jdbcTemplate.containsKey(dbName)) {
@@ -170,7 +187,7 @@ public class SqlSession {
                 dbName = defaultDataSource + Master;
             else if (dbName.endsWith(Slave))
                 dbName = defaultDataSource + Slave;
-            logger.warn("数据源{}不存在，使用了默认数据源{}", _dbName, dbName);
+            logger.trace("数据源{}不存在，使用了默认数据源{}", _dbName, dbName);
 
         }
         //如果开启事务，则停用从库
@@ -181,7 +198,7 @@ public class SqlSession {
             logger.error("数据源" + dbName + "不存在", new DataSourceNotExistException("数据源" + dbName + "不存在"));
             throw new DataSourceNotExistException("数据源" + dbName + "不存在");
         }
-        logger.info("使用的数据源是{}", dbName);
+        logger.trace("使用的数据源是{}", dbName);
         NamedParameterJdbcDaoSupport jdbc = jdbcTemplate.get(dbName);
         setTransaction(dbName, jdbc.getDataSource());
         return jdbc;
