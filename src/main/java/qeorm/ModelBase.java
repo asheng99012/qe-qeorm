@@ -1,20 +1,12 @@
 package qeorm;
 
-import java.io.Serializable;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.*;
-
-import com.google.common.base.Splitter;
-import org.springframework.beans.BeanUtils;
-import org.springframework.cglib.beans.BeanMap;
-
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
-
+import org.springframework.beans.BeanUtils;
+import org.springframework.cglib.beans.BeanMap;
 import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
@@ -22,6 +14,11 @@ import qeorm.annotation.Transient;
 import qeorm.intercept.IFunIntercept;
 import qeorm.utils.ExtendUtils;
 import qeorm.utils.JsonUtils;
+
+import java.io.Serializable;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.*;
 
 /**
  * Created by asheng on 2015/7/20 0020.
@@ -40,21 +37,27 @@ public class ModelBase implements IFunIntercept, Serializable, Cloneable {
     private static Map<String, Field[]> fieldMap = new HashMap<String, Field[]>();
 
     @Transient
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private Integer pn;
 
     @Transient
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private Integer ps;
 
     @Transient
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private Boolean needCount;
 
     @Transient
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private Boolean withRelation;
 
     @Transient
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private Boolean _ignoreNull = true;
 
     @Transient
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private Set<String> nullSet;
 
     public void ignoreNull() {
